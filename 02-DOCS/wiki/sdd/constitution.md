@@ -47,22 +47,25 @@ version: draft
 ## 5. Security & privacy floor
 
 13. **Cero secretos en el repositorio:** Ninguna clave (`MASTER_API_KEY`, `RESEND_API_KEY`, credenciales DB/Google) se versiona; se cargan desde archivos `.env` ignorados por Git (referencia en [.env.example](../../../backend-tuinvitacionespecial/.env.example)).
-14. **Aislamiento estricto por cuenta (`BR-06`) y verificación criptográfica:** Toda ruta del panel de novios exige identidad Google autenticada con `activo = true` para el `novios_id` solicitado y filtra explícitamente por `novios_id` en base de datos; las operaciones de SuperAdmin exigen lista blanca en `admins` o `MASTER_API_KEY` validada en tiempo constante.
-15. **Privacidad de enlaces públicos:** El acceso público del invitado se limita al ámbito de su `token_enlace` único de alta entropía y bloquea mutaciones tras vencer `rsvp_deadline` (`BR-03`).
+14. **Sesión revocable en Redis con cookie `HttpOnly` y TTL de 7 días (Camino B):** La identidad de Google (JWT) se verifica criptográficamente una sola vez al iniciar sesión para generar un token opaco (`crypto.randomBytes(32)`) guardado en **Redis 8.0** con **TTL de 7 días (604 800 s)** y emitido mediante cookie `HttpOnly; Secure; SameSite=Lax`; queda prohibido almacenar tokens en `localStorage` o `sessionStorage`, y la sesión debe revocarse al instante en logout o al marcar `activo = false`.
+15. **Aislamiento estricto por cuenta y Anti-IDOR (`BR-06`):** Toda ruta del panel exige acceso `activo = true` para el `novios_id` solicitado y filtra explícitamente en SQL por el `novios_id` autorizado en la sesión (`WHERE id = $id AND novios_id = $noviosId`), prohibiendo consultas por ID aislado; las operaciones de SuperAdmin exigen lista blanca en `admins` o `MASTER_API_KEY` validada en tiempo constante.
+16. **Protección CSRF en mutaciones con cookies:** Además de `SameSite=Lax`, toda petición HTTP mutadora autenticada por cookie (`POST`, `PATCH`, `PUT`, `DELETE`) valida estrictamente las cabeceras `Origin`/`Referer` contra el dominio oficial del frontend.
+17. **Enlaces públicos de alta entropía y Rate Limiting en Redis:** Los `token_enlace` se generan con aleatoriedad criptográfica (`node:crypto`), bloqueando mutaciones tras vencer `rsvp_deadline` (`BR-03`), y la API aplica limitación de tasa en Redis (`@fastify/rate-limit`) sobre el login de Google, las rutas públicas de R.S.V.P. y el disparo de envíos masivos.
+18. **Blindaje perimetral HTTP, CORS y `MASTER_API_KEY`:** La API aplica cabeceras de seguridad mediante `@fastify/helmet`, restringe CORS exclusivamente al dominio oficial del frontend y acota `MASTER_API_KEY` únicamente a rutas administrativas (`/api/admin/*`, protegidas por red/IP en proxy en producción).
 
 ## 6. UX / accessibility floor
 
-16. **Usabilidad tolerante para usuarios no técnicos:** La importación masiva (`.xlsx`/`.csv`) valida en cliente antes de confirmar, soporta codificación UTF-8 y Windows-1252 con delimitadores `,`/`;`, ofrece edición en celda y nunca falla de forma opaca.
-17. **Invitación accesible y móvil primero:** Los flujos públicos de invitación y R.S.V.P. deben operar en dispositivos móviles con foco visible, navegación por teclado y estados de error claros y en español.
+19. **Usabilidad tolerante para usuarios no técnicos:** La importación masiva (`.xlsx`/`.csv`) valida en cliente antes de confirmar, soporta codificación UTF-8 y Windows-1252 con delimitadores `,`/`;`, ofrece edición en celda y nunca falla de forma opaca.
+20. **Invitación accesible y móvil primero:** Los flujos públicos de invitación y R.S.V.P. deben operar en dispositivos móviles con foco visible, navegación por teclado y estados de error claros y en español.
 
 ## 7. Performance budgets
 
-18. **Asincronía en envíos masivos:** El despacho de correos masivos nunca bloquea el hilo HTTP de Fastify; se encola en BullMQ con rate-limiting y clave de idempotencia en Resend.
-19. **Consultas indexadas:** Toda clave foránea y filtro frecuente de panel/OAuth mantiene índice B-Tree en PostgreSQL.
+21. **Asincronía en envíos masivos:** El despacho de correos masivos nunca bloquea el hilo HTTP de Fastify; se encola en BullMQ con rate-limiting y clave de idempotencia en Resend.
+22. **Consultas indexadas:** Toda clave foránea y filtro frecuente de panel/OAuth mantiene índice B-Tree en PostgreSQL.
 
 ## 8. Knowledge & decisions
 
-20. **Registro continuo de decisiones:** Toda decisión arquitectónica, cambio de contrato o excepción de riesgo se registra con fecha, alternativas y motivo en [decisions.md](./decisions.md).
+23. **Registro continuo de decisiones:** Toda decisión arquitectónica, cambio de contrato o excepción de riesgo se registra con fecha, alternativas y motivo en [decisions.md](./decisions.md).
 
 ## Definition of Done (umbral de verificación en `verify`)
 
@@ -72,9 +75,9 @@ Una funcionalidad o cambio queda terminado solo cuando cumple **todos** estos pu
 - [ ] Tests automatizados verdes cubriendo casos válidos, límites (`BR-01`–`BR-06`) y errores (principio 6).
 - [ ] Esquema Drizzle y migraciones SQL alineados si hubo cambios de datos (principio 7).
 - [ ] Contratos HTTP validados con Zod y transacciones ACID aplicadas en mutaciones críticas (principios 8–9).
-- [ ] Sin secretos expuestos y con validación RBAC / aislamiento por `novios_id` verificado (principios 13–15).
+- [ ] Sin secretos expuestos, sesión revocable, anti-IDOR, CSRF, rate limiting y cabeceras HTTP verificadas (principios 13–18).
 - [ ] Revisión completada según [REVIEW.md](../../../REVIEW.md) (incluyendo aprobación humana en cambios Tier 2).
-- [ ] Decisiones relevantes anotadas en [decisions.md](./decisions.md) y autoría Git humana respetada (principios 12, 20).
+- [ ] Decisiones relevantes anotadas en [decisions.md](./decisions.md) y autoría Git humana respetada (principios 12, 23).
 
 ## Amendment log (append-only)
 
@@ -82,3 +85,4 @@ Una funcionalidad o cambio queda terminado solo cuando cumple **todos** estos pu
 |------|---------|--------|-----|
 | 2026-11-19 | draft | Draft generated by `rsc onboard`. | The SDD floor needs a constitution; ratification is the `constitution` phase's. |
 | 2026-11-19 | draft | Populated principles from functional SDD and monorepo config; pending user ratification. | Bridge business SDD into ASDD base rules before writing plans and code. |
+| 2026-11-19 | draft | Fixed 7-day Redis session TTL (Camino B) and added security floor pieces 1–4 (CSRF, Anti-IDOR, Rate Limiting, Helmet/CORS/Admin isolation). | User approved security posture before ratification. |

@@ -60,9 +60,9 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 
 ## What it must respect
 
-- Los principios de seguridad y aislamiento de [constitution.md](../constitution.md) (principios 13 y 14).
+- Los principios de seguridad, sesión revocable (TTL 7 días) y aislamiento de [constitution.md](../constitution.md) (principios 13 al 18).
 - La regla `BR-04` del blueprint original (cupo `max_accesos` por boda) y `BR-06` (acceso multi-boda y aislamiento estricto por cuenta).
-- Las decisiones registradas en [decisions.md](../decisions.md) y los pendientes técnicos de sesión diferidos en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md).
+- Las decisiones registradas en [decisions.md](../decisions.md) y los contratos HTTP pendientes en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md).
 
 ## How it proves it
 
@@ -72,7 +72,7 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 
 - **Main path:**
   - El SuperAdmin registra la boda y autoriza hasta `max_accesos` correos de Google normalizados, dejando traza de qué administrador autorizó cada acceso (o vacío si provino de automatización maestra).
-  - El novio o planner inicia sesión con Google; el sistema consulta sus bodas activas: con exactamente 1 boda activa ingresa directo al panel; con 2 o más bodas activas visualiza el selector para elegir la boda activa y puede conmutar entre ellas sin re-autenticarse.
+  - El novio o planner inicia sesión con Google; el sistema valida su identidad una sola vez y emite una sesión gestionada y revocable en el servidor (sin guardar credenciales en almacenamiento legible desde el navegador), consulta sus bodas activas y: con exactamente 1 boda activa ingresa directo al panel; con 2 o más bodas activas visualiza el selector para elegir la boda activa y puede conmutar entre ellas sin re-autenticarse.
 - **Edge cases:**
   - Un mismo correo puede autorizarse en distintas bodas, pero no duplicarse dentro de la misma boda.
   - Si un acceso pasa de activo a inactivo mientras el usuario tenía una boda asignada, sus nuevas acciones sobre esa boda quedan bloqueadas.
@@ -89,10 +89,11 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 - Given un usuario autorizado únicamente en la Boda A, When intenta leer o modificar recursos pertenecientes a la Boda B, Then el sistema rechaza la petición por falta de permisos y no filtra ni altera datos de la Boda B.
 - Given un usuario autenticado con Google cuyo correo tiene 0 bodas activas o fue marcado inactivo, When intenta acceder al panel, Then el acceso es denegado con aviso de correo no autorizado.
 - Given un novio autenticado en su panel, When intenta modificar la fecha límite de confirmación o el cupo máximo de accesos de su boda, Then la acción es rechazada.
+- Given un usuario con sesión activa en el panel, When cierra sesión o su acceso pasa a inactivo, Then su sesión queda revocada de inmediato y las peticiones posteriores son rechazadas sin esperar a que caduque su inicio de sesión con Google.
 
 ## Points to clarify
 
-- **pregunta abierta** — ¿Cuánto tiempo debe permanecer vigente la sesión iniciada con Google antes de pedir re-autenticación y cómo debe propagarse la revocación cuando un acceso se marca inactivo? *(Mecanismo candidato documentado en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md)).*
+- **suposición tomada** — La sesión gestionada en el servidor mantiene una vigencia de `7` días (`604 800` segundos) con revocación inmediata al cerrar sesión o desactivar un acceso ([constitution.md](../constitution.md), principio 14). *Base:* equilibrio estándar entre comodidad de edición para novios/planners y caducidad periódica. *Riesgo:* si se requiere renovación deslizante por actividad frente a TTL fijo, se ajusta en `plan`.
 - **pregunta abierta** — ¿El SuperAdmin administrará altas de bodas y accesos desde una interfaz web privada dentro de `/panel` o mediante llamadas/scripts administrativos en la primera versión?
 - **suposición tomada** — Al contar el cupo `max_accesos`, solo se consideran los accesos activos (o todos los registros vinculados a la boda). *Base:* evitar que alguien desactivado consuma permanentemente uno de los 2 cupos gratuitos de la pareja. *Riesgo:* confirmar si un acceso desactivado libera cupo o si debe eliminarse para liberar espacio.
-- **decisión diferida** — Esquemas HTTP exactos, nombres de cookie/cabeceras y política de rate-limiting quedan diferidos para `plan` según [notas-api-y-seguridad.md](../notas-api-y-seguridad.md).
+- **decisión diferida** — Esquemas HTTP exactos (rutas, payloads y códigos de error) del Punto 1 en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md), diferidos para cerrar antes de `plan`.

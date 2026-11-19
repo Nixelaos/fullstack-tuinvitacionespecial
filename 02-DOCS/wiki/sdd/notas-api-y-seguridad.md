@@ -53,24 +53,24 @@ El SDD funcional solo nombra explícitamente `POST /api/invitations/batch`. Ante
 
 ---
 
-## Punto 2 — Recomendación de Seguridad ("Estándar de producción sin sobreingeniería")
+## Punto 2 — Recomendación de Seguridad ("Estándar de producción sin sobreingeniería") — **DECIDIDO**
 
-Arquitectura alineada con el stack existente (Fastify 5 + Redis 8.0 + PostgreSQL 18.7 + Astro/React + Caddy):
+Arquitectura aprobada el **2026-11-19** e incorporada en [constitution.md](./constitution.md) (principios 13–18) y [decisions.md](./decisions.md):
 
-1. **Sesión Stateful en Redis + Cookie `HttpOnly` (evitar Google ID Token en `localStorage`):**
+1. **[DECIDIDO — Camino B (2026-11-19)] Sesión Stateful en Redis + Cookie `HttpOnly` (TTL: 7 días / 604 800 s):**
    - El Google ID Token expira ~1 hora y almacenarlo en el navegador lo expone a XSS.
-   - **Flujo recomendado:** El frontend envía el `id_token` **una sola vez** al endpoint de login. El backend lo valida con `verifyGoogleIdToken` (`src/lib/auth.ts`), resuelve rol y bodas activas en Postgres, genera un ID opaco criptográfico (`crypto.randomBytes(32)`), persiste la sesión en **Redis 8.0** con TTL (ej. 7 días) y emite una cookie `HttpOnly; Secure; SameSite=Lax; Path=/`.
+   - **Flujo aprobado:** El frontend envía el `id_token` **una sola vez** al endpoint de login. El backend lo valida con `verifyGoogleIdToken` (`src/lib/auth.ts`), resuelve rol y bodas activas en Postgres, genera un ID opaco criptográfico (`crypto.randomBytes(32)`), persiste la sesión en **Redis 8.0** con **TTL de 7 días (604 800 s)** y emite una cookie `HttpOnly; Secure; SameSite=Lax; Path=/`.
    - Permite revocación inmediata (al marcar `activo = false` o hacer logout) sin depender de la ventana de Google.
-2. **Protección CSRF ligera:**
+2. **[DECIDIDO (2026-11-19)] Protección CSRF ligera:**
    - Con Caddy enrutando frontend y `/api/*` bajo el mismo dominio, `SameSite=Lax` más validación estricta de `Origin`/`Referer` en métodos mutadores (`POST`, `PATCH`, `PUT`, `DELETE`) protege contra CSRF sin tokens complejos. (Si van en subdominios separados, evaluar double-submit token o BFF en Astro).
-3. **Aislamiento multi-tenant obligatorio en SQL (`BR-06`):**
+3. **[DECIDIDO (2026-11-19)] Aislamiento multi-tenant obligatorio en SQL (`BR-06` / Anti-IDOR):**
    - Nunca consultar ni mutar por `familiaId` aislado. Toda query del panel debe incluir `AND novios_id = $noviosId` validado desde la sesión del usuario para impedir ataques IDOR.
-4. **Rate Limiting en Redis (`@fastify/rate-limit`):**
+4. **[DECIDIDO (2026-11-19)] Rate Limiting en Redis (`@fastify/rate-limit`):**
    - Umbrales diferenciados sobre Redis 8.0 en:
      - Login Google (evita abuso de verificación).
      - Endpoints públicos por `token_enlace` (evita fuerza bruta de tokens o spam de envíos R.S.V.P.).
      - Disparo de correo masivo.
-5. **Hardening HTTP, `MASTER_API_KEY` y entropía de enlaces:**
+5. **[DECIDIDO (2026-11-19)] Hardening HTTP, `MASTER_API_KEY` y entropía de enlaces:**
    - Registrar `@fastify/helmet` y CORS restringido al origen exacto del frontend.
    - Restringir `MASTER_API_KEY` únicamente a `/api/admin/*` y bloquear ese prefijo al tráfico público o filtrarlo por red/IP en Caddy en producción.
    - Generar el sufijo aleatorio de `token_enlace` con `node:crypto` (alta entropía URL-safe) para impedir enumeración secuencial.
