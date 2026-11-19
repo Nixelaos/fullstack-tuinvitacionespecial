@@ -1,0 +1,35 @@
+{
+  "name": "tuinvitacionespecial-backend",
+  "version": "1.0.0",
+  "description": "Backend API para Tu Invitación Especial (Fastify v5, Zod v4, Drizzle ORM, PostgreSQL 18.7, BullMQ + Redis 8.0)",
+  "type": "module",
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/server.ts",
+    "build": "tsc --noEmit",
+    "start": "node --env-file=.env src/server.ts",
+    "test": "node --test src/**/*.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "bullmq": "^6.7.0",
+    "drizzle-orm": "0.45.4",
+    "fastify": "^5.12.8",
+    "fastify-type-provider-zod": "^7.0.0",
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.1",
+    "resend": "^6.38.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "7.0.2"
+  }
+}

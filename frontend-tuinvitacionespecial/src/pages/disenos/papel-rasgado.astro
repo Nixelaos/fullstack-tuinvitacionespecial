@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { PapelRasgadoInvitation } from '../../components/PapelRasgadoInvitation';
+import { BRAND_NAME } from '../../data/siteConfig';
+---
+
+<Layout
+  title={`Valentina & Sebastián — Invitación de Boda Papel Rasgado | ${BRAND_NAME}`}
+  description="Invitación digital de boda interactiva con apertura de sobre de papel pastel, foto de pareja en la playa a pleno sol, divisores de papel rasgado artesanal e itinerario del evento."
+>
+  <PapelRasgadoInvitation client:load />
+</Layout>
