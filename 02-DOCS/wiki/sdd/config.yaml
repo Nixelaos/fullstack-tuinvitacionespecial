@@ -1,0 +1,72 @@
+version: 1
+project:
+  root: .
+  stacks:
+    - node
+    - typescript
+    - fastify
+    - postgresql
+    - drizzle
+    - redis
+    - bullmq
+    - astro
+    - react
+    - tailwindcss
+  package_managers:
+    - npm
+  monorepo: true
+  signals:
+    - backend-tuinvitacionespecial/package.json
+    - frontend-tuinvitacionespecial/package.json
+    - backend-tuinvitacionespecial/docker-compose.yml
+    - backend-tuinvitacionespecial/drizzle.config.ts
+sdd:
+  artifact_store: 02-DOCS/wiki/sdd
+  execution_mode: interactive
+  registry_path: .rsc/skill-registry.json
+  review_budget:
+    line_budget: 400
+    file_budget: 12
+  delivery_strategy:
+    default: ask-on-risk
+testing:
+  strict_tdd: true
+  runners:
+    - node:test
+  commands:
+    apply:
+      - cd backend-tuinvitacionespecial && npm run build && npm test
+    verify:
+      - cd backend-tuinvitacionespecial && npm run build && npm test
+      - cd frontend-tuinvitacionespecial && npm run build
+phase_rules:
+  proposal: optional-on-ambiguity
+  specify: requires intent or proposal
+  plan: requires spec
+  tasks: requires plan and spec
+  analyze: requires spec plan tasks
+  implement: requires analyze pass, strict_tdd when testing.strict_tdd is true
+  verify: requires spec tasks evidence
+  archive: requires verify record and review/ship outcome
+models:
+  enabled: false              # opt-in master switch; false = honor session model, announce nothing
+  provider: google            # which provider the tiers below resolve to
+  tiers:
+    heavy: gemini-2.5-pro
+    balanced: gemini-2.5-flash
+    light: gemini-2.5-flash-lite
+  phases:
+    constitution: heavy
+    specify: balanced
+    clarify: balanced
+    plan: heavy
+    tasks: balanced
+    analyze: heavy
+    implement: balanced
+    verify: balanced
+    review: heavy
+    ship: light
+    debug: heavy
+    worktrees: light
+    sdd-init: light
+  overrides: {}               # per-phase tier overrides set by the user
