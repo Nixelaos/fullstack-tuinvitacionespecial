@@ -6,12 +6,12 @@ tags: [sdd, spec, auth, rbac]
 timestamp: 2026-11-19T21:40:00Z
 topic: sdd
 slug: auth-rbac-y-cuentas
-status: draft
+status: approved
 ---
 
 # Spec — Autenticación, Roles y Aislamiento Multi-Boda
 
-> Slug: `auth-rbac-y-cuentas` · Status: draft · Created: 2026-11-19
+> Slug: `auth-rbac-y-cuentas` · Status: approved · Created: 2026-11-19
 > Inherits: [constitution](../constitution.md)
 
 ## Problem & why

@@ -24,10 +24,22 @@ Mapa de documentación viva del proyecto bajo `02-DOCS/wiki/`.
 
 | Spec | Dominio | Estado | Ruta |
 |---|---|---|---|
-| Autenticación, RBAC y Cuentas | SuperAdmin, Google OAuth, multi-boda y `BR-04`/`BR-06` | draft | [auth-rbac-y-cuentas.md](./sdd/specs/auth-rbac-y-cuentas.md) |
+| Autenticación, RBAC y Cuentas | SuperAdmin, Google OAuth, multi-boda y `BR-04`/`BR-06` | approved | [auth-rbac-y-cuentas.md](./sdd/specs/auth-rbac-y-cuentas.md) |
 | Panel Pre-Envío y Distribución | Importación `.xlsx`/`.csv`, CRUD, `BR-05`, WhatsApp y correo masivo `BR-02` | draft | [panel-pre-envio-y-distribucion.md](./sdd/specs/panel-pre-envio-y-distribucion.md) |
 | Formulario Público R.S.V.P. | Invitación personalizada, `BR-01`, `BR-03` y concurrencia | draft | [rsvp-publico-invitados.md](./sdd/specs/rsvp-publico-invitados.md) |
 | Dashboard Post-Envío | Métricas en vivo, menús, alergias, playlist, muro y exportación | draft | [dashboard-post-envio.md](./sdd/specs/dashboard-post-envio.md) |
+
+### Planes de implementación (`02-DOCS/wiki/sdd/plans/`)
+
+| Plan | Alcance | Estado | Ruta |
+|---|---|---|---|
+| Autenticación, RBAC y Cuentas | 6 sub-bloques, tareas TDD `T001`–`T023` y pronóstico de riesgo | draft | [auth-rbac-y-cuentas.md](./sdd/plans/auth-rbac-y-cuentas.md) |
+
+### Análisis de consistencia (`02-DOCS/wiki/sdd/analysis/`)
+
+| Análisis | Veredicto | Fecha | Ruta |
+|---|---|---|---|
+| Autenticación, RBAC y Cuentas | `GATE: PASS` (`0 CRITICAL`, `0 HIGH`, `3 MEDIUM`, `3 LOW`) | 2026-11-20 | [auth-rbac-y-cuentas.md](./sdd/analysis/auth-rbac-y-cuentas.md) |
 
 ## FTD (`02-DOCS/wiki/ftd/`)
 
