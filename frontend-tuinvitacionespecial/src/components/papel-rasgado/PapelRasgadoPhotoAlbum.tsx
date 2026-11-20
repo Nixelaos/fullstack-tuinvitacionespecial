@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 import { PapelRasgadoFlower } from './PapelRasgadoFlower';
+import { useModal } from '../../hooks/useModal';
 import { PAPEL_RASGADO_ALBUM_CONFIG } from '../../data/templates/papelRasgadoData';
 
 export interface PapelRasgadoPhotoAlbumProps {
@@ -38,12 +39,13 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
   flowerVariant = 'right',
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const {
+    isOpen: isModalOpen,
+    mounted,
+    open: openModal,
+    close: closeModal,
+    dialogRef,
+  } = useModal();
 
   // Generar el código QR dinámicamente con alta nitidez y contraste adaptado a la estética
   useEffect(() => {
@@ -71,26 +73,6 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
       isCancelled = true;
     };
   }, [albumUrl]);
-
-  // Manejo de modal de ampliación (bloqueo de scroll y tecla Escape)
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsModalOpen(false);
-      }
-    };
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isModalOpen]);
 
   return (
     <div
@@ -163,17 +145,18 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
 
             {/* CÓDIGO QR DIRECTO SOBRE EL FONDO (SIN HOVER ZOOM) */}
             <div
-              onClick={() => setIsModalOpen(true)}
+              onClick={openModal}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  setIsModalOpen(true);
+                  openModal();
                 }
               }}
               className="cursor-pointer bg-white p-2 rounded-xl border border-[#DFCBB5] shadow-xs focus:outline-none focus:ring-2 focus:ring-[#B87A4A]/40"
               title="Toca para ampliar el código QR"
+              aria-label="Toca para ampliar el código QR del álbum de fotos"
             >
               {qrDataUrl ? (
                 <img
@@ -183,7 +166,10 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
                 />
               ) : (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center bg-stone-100 rounded-lg text-stone-400 gap-1">
-                  <Sparkles className="w-5 h-5 text-[#B87A4A] animate-pulse" />
+                  <Sparkles
+                    className="w-5 h-5 text-[#B87A4A] animate-pulse"
+                    aria-hidden="true"
+                  />
                   <span className="text-[9px]">Generando QR...</span>
                 </div>
               )}
@@ -202,14 +188,16 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
         ? createPortal(
             <div
               className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm transition-opacity duration-300"
-              onClick={() => setIsModalOpen(false)}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="qr-modal-title"
+              onClick={closeModal}
             >
               <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="qr-modal-title"
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-[340px] sm:max-w-[380px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
+                className="relative w-full max-w-[340px] sm:max-w-[380px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50"
               >
                 {/* Filete interior sutil */}
                 <div className="absolute inset-2 sm:inset-2.5 border-2 border-[#E0D2C2] rounded-xl pointer-events-none" />
@@ -217,17 +205,17 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
                 {/* Botón cerrar X */}
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer"
+                  onClick={closeModal}
+                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]"
                   aria-label="Cerrar ventana"
                 >
-                  <X className="w-4 h-4 stroke-[2.5]" />
+                  <X className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
                 </button>
 
                 {/* Encabezado del modal */}
                 <div className="relative z-10 flex flex-col items-center w-full mb-3">
                   <div className="w-10 h-10 rounded-full bg-[#FCF9F3] border-2 border-[#CDB8A3] shadow-xs flex items-center justify-center text-[#B87A4A] mb-2">
-                    <Camera className="w-5 h-5" />
+                    <Camera className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <h3
                     id="qr-modal-title"
@@ -259,9 +247,12 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
                     <a
                       href={qrDataUrl}
                       download="qr-fotos-matrimonio.png"
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#B87A4A] to-[#A06437] text-white text-xs sm:text-sm font-bold shadow-md hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#B87A4A] to-[#A06437] text-white text-xs sm:text-sm font-bold shadow-md hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E] focus:ring-offset-2 focus:ring-offset-[#FAF3EB]"
                     >
-                      <Download className="w-4 h-4 stroke-[2.5]" />
+                      <Download
+                        className="w-4 h-4 stroke-[2.5]"
+                        aria-hidden="true"
+                      />
                       <span>Descargar Imagen QR</span>
                     </a>
                   )}
@@ -271,9 +262,9 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
                     href={albumUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[#FCF9F3] hover:bg-[#F2E5D5] border-2 border-[#DFCBB5] text-[#7D5F48] hover:text-[#2F2420] text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[#FCF9F3] hover:bg-[#F2E5D5] border-2 border-[#DFCBB5] text-[#7D5F48] hover:text-[#2F2420] text-xs font-bold transition-all active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-4 h-4" aria-hidden="true" />
                     <span>Abrir Enlace del Álbum</span>
                   </a>
                 </div>
@@ -281,8 +272,8 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
                 {/* Botón inferior para cerrar */}
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="relative z-10 mt-3 text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer"
+                  onClick={closeModal}
+                  className="relative z-10 mt-3 text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50 rounded px-2 py-0.5"
                 >
                   Cerrar
                 </button>

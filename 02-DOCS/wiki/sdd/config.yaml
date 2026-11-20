@@ -38,7 +38,7 @@ testing:
       - cd backend-tuinvitacionespecial && npm run build && npm test
     verify:
       - cd backend-tuinvitacionespecial && npm run build && npm test
-      - cd frontend-tuinvitacionespecial && npm run build
+      - cd frontend-tuinvitacionespecial && npm test && npx tsc --noEmit && npm run build
 phase_rules:
   proposal: optional-on-ambiguity
   specify: requires intent or proposal

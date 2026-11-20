@@ -71,9 +71,10 @@ Incrustar un formulario externo genérico (como Google Forms) enlazado desde la 
 ## Behaviour
 
 - **Main path:**
-  - Al abrir el enlace válido dentro del plazo, el formulario precarga el estado existente (o valores por defecto dentro del cupo). Si marca asistencia positiva para `N` personas, despliega exactamente `N` selectores de menú individuales; al enviar, guarda la respuesta y reemplaza el conjunto de menús asociados dentro de una operación atómica.
+  - Al abrir el enlace válido dentro del plazo, el formulario precarga el estado existente (o valores por defecto dentro del cupo). Si marca asistencia positiva para `N` personas, despliega selección de exactamente `N` platos (chips de selección única para `1` asistente o contadores `- / +` por plato con contador `X / N` y reemplazo inteligente de `'Estándar'` para `> 1` asistentes); al enviar, guarda la respuesta y reemplaza el conjunto de menús asociados dentro de una operación atómica.
+  - Si una plantilla oculta el selector de menú (`features.showMenu = false`), el cliente completa automáticamente `'Estándar'` por asistente en el payload para preservar `BR-01` sin mostrar menús en la UI.
 - **Edge cases:**
-  - Si el invitado marca `"No asistiré"`, los selectores de menú se deshabilitan, la cantidad confirmada pasa a `0` y cualquier selección de menús de una confirmación previa se elimina.
+  - Si el invitado marca `"No asistiré"`, los controles de pases, menús, alergias y canción se ocultan/deshabilitan (manteniendo opcionalmente el campo de dedicatoria `mensaje_novios` si está activo), el payload se normaliza a `cant_asistentes = 0` y `menus_seleccionados = []`, y cualquier selección de menús de una confirmación previa se elimina.
   - Si la familia edita una confirmación previa (por ejemplo cambia de `4` asistentes a `2` o cambia sus platos), sus platos anteriores se reemplazan por completo por los nuevos sin dejar residuos ni duplicar totales en el dashboard.
   - Si dos miembros de la misma familia envían el formulario simultáneamente, las escrituras se serializan para que persista íntegra únicamente la última confirmación recibida sin mezclar menús de ambas peticiones.
 - **Error paths:**
@@ -90,7 +91,7 @@ Incrustar un formulario externo genérico (como Google Forms) enlazado desde la 
 
 ## Points to clarify
 
-- **pregunta abierta** — Cuando un invitado marca `"No asistiré"`, ¿debe poder enviar igualmente una dedicatoria para los novios (`mensaje_novios`), o el formulario oculta también dedicatoria, canción y alergias?
-- **pregunta abierta** — ¿Con qué zona horaria se fija y valida `rsvp_deadline` (UTC explícito, zona horaria de la boda/Chile o fin del día local) para evitar bloqueos prematuros?
-- **suposición tomada** — El comportamiento actual del formulario en el frontend selecciona un conjunto único de menús en lugar de un selector por cada uno de los `N` asistentes, por lo que deberá adaptarse para cumplir `BR-01` (permitiendo repetir un mismo menú para varias personas, ej. `2` Veganos + `1` Estándar). *Base:* Escenario 3 y regla `BR-01` del SDD funcional. *Riesgo:* ninguno, es corrección de alineamiento entre formulario y regla de negocio.
-- **decisión diferida** — Soporte de nuevas plantillas visuales más allá de `/papel-rasgado` reutilizando la misma lógica R.S.V.P.
+- **resuelto (frontend)** — Cuando un invitado marca `"No asistiré"`, se ocultan pases, menús, alergias y canción (normalizando el payload a `cant_asistentes = 0`, `menus_seleccionados = []`, `alergias = ''`, `cancion_favorita = ''`), y se mantiene disponible el campo opcional de dedicatoria (`mensaje_novios`) si la plantilla tiene `features.showDedication` activo.
+- **pregunta abierta (backend)** — ¿Con qué zona horaria canónica se fija y valida `rsvp_deadline` en servidor (UTC explícito o zona horaria de Chile `America/Santiago`)? *(Nota: la capa cliente `isRsvpDeadlinePassed` ya soporta ISO local y timestamps con zona horaria `Z`/`±HH:MM`, priorizando siempre la bandera `isDeadlinePassed` devuelta por la API.)*
+- **resuelto (frontend)** — El formulario en `frontend-tuinvitacionespecial/` ya fue migrado a `BR-01` (`useRsvpForm`, `rsvpUtils.ts`, `PapelRasgadoRsvpForm.tsx`) con valor canónico exacto `'Celíaco'`, selección única para 1 asistente y contadores `- / +` por plato para `> 1` asistentes (permitiendo repetir menús, ej. `2× Vegano` + `1× Estándar`).
+- **resuelto en capa lógica (multi-plantilla)** — Toda la lógica R.S.V.P. quedó desacoplada a módulos globales (`types/rsvp.ts`, `data/rsvpDefaults.ts`, `utils/rsvpUtils.ts`, `hooks/useInvitationParams.ts`, `hooks/useRsvpForm.ts`, `hooks/useModal.ts`, `hooks/useRsvp.ts`) con adaptador inyectable `RsvpAdapter` y `RsvpFeatureFlags`, dejando la capa visual aislada en cada plantilla (`src/components/<plantilla>/`). Queda diferido únicamente el diseño de nuevas plantillas visuales y la implementación de `apiRsvpAdapter` contra los endpoints de Fastify.

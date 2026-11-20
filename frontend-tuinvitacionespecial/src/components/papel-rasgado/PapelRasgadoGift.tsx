@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Gift, Copy, Check, X } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 import { PapelRasgadoFlower } from './PapelRasgadoFlower';
+import { useModal } from '../../hooks/useModal';
 
 export interface PapelRasgadoGiftProps {
   className?: string;
@@ -33,36 +34,14 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
   holderRut = 'XX.XXX.XXX-X',
   holderEmail = 'regalos@valentinaysebastian.cl',
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
-
-  // Cerrar con Escape y bloquear el scroll del fondo mientras el modal está abierto
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeModal();
-      }
-    };
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
+  const {
+    isOpen,
+    mounted,
+    open: openModal,
+    close: closeModal,
+    dialogRef,
+  } = useModal();
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -181,13 +160,15 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
             <div
               className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm transition-opacity duration-300"
               onClick={closeModal}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="gift-modal-title"
             >
               <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="gift-modal-title"
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-[350px] sm:max-w-[380px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
+                className="relative w-full max-w-[350px] sm:max-w-[380px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50"
               >
                 {/* Filete interior sutil tipo papelería de alta gama con bordes definidos */}
                 <div className="absolute inset-2 sm:inset-2.5 border-2 border-[#E0D2C2] rounded-xl pointer-events-none" />
@@ -196,16 +177,16 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer"
+                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]"
                   aria-label="Cerrar recuadro"
                 >
-                  <X className="w-4 h-4 stroke-[2.5]" />
+                  <X className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
                 </button>
 
                 {/* Título del recuadro */}
                 <div className="relative z-10 flex flex-col items-center w-full mb-3.5">
                   <div className="w-10 h-10 rounded-full bg-[#FCF9F3] border-2 border-[#CDB8A3] shadow-xs flex items-center justify-center text-[#B87A4A] mb-2">
-                    <Gift className="w-5 h-5" />
+                    <Gift className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <h3
                     id="gift-modal-title"
@@ -264,17 +245,23 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="w-full mt-3.5 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#B87A4A] to-[#A06437] text-white text-xs sm:text-sm font-bold shadow-md hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer"
+                    className="w-full mt-3.5 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#B87A4A] to-[#A06437] text-white text-xs sm:text-sm font-bold shadow-md hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E] focus:ring-offset-2 focus:ring-offset-[#FCF9F3]"
                     title="Copiar datos bancarios"
                   >
                     {copied ? (
                       <>
-                        <Check className="w-4 h-4 text-emerald-200 stroke-[2.5]" />
+                        <Check
+                          className="w-4 h-4 text-emerald-200 stroke-[2.5]"
+                          aria-hidden="true"
+                        />
                         <span className="font-bold">¡Datos copiados con éxito!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4 text-amber-100 stroke-[2.5]" />
+                        <Copy
+                          className="w-4 h-4 text-amber-100 stroke-[2.5]"
+                          aria-hidden="true"
+                        />
                         <span className="font-bold">Copiar datos de cuenta</span>
                       </>
                     )}
@@ -285,7 +272,7 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="relative z-10 mt-3.5 text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer"
+                  className="relative z-10 mt-3.5 text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50 rounded px-2 py-0.5"
                 >
                   Cerrar
                 </button>

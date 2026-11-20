@@ -89,16 +89,19 @@ Al igual que en la **sección de Regalo**, la interacción se encuentra **escond
   * Selector numérico táctil `[ - ] [ cantidad ] [ + ]`.
   * La cantidad mínima es 1 y el tope máximo es el número de pases asignados al grupo familiar.
 
-### Módulo 4: Menú y Restricciones Alimentarias
-* **Propósito:** Recoger datos críticos para el banquetero sin formularios invasivos.
+### Módulo 4: Menú y Restricciones Alimentarias (`BR-01`)
+* **Propósito:** Recoger datos críticos para el banquetero asegurando paridad exacta de **1 plato por cada asistente confirmado** (`COUNT(rsvp_menus) == cant_asistentes`).
 * **Formato:**
-  * Pastillas interactivas (*chips*) seleccionables con un toque:
-    * `Estándar` (opción predeterminada).
+  * **1 asistente confirmado:** Pastillas interactivas (*chips* `radiogroup` accesible con teclado) de selección única.
+  * **2 o más asistentes confirmados:** Contadores compactos `- / +` por tipo de menú con indicador de progreso (`X / N` platos asignados) y reemplazo inteligente de `Estándar` para evitar fricción en móvil:
+    * `Estándar` (opción predeterminada, pre-asignada inicialmente a cada asistente).
     * `Vegetariano`.
     * `Vegano`.
-    * `Celíaco / Libre de Gluten`.
+    * `Celíaco` (valor canónico exacto de `tipo_menu_enum` en PostgreSQL).
     * `Menú Infantil`.
   * Campo de texto breve opcional para alertas de alergias severas (ej. maní, mariscos, lactosa).
+
+> **Arquitectura frontend:** Toda la capa lógica (`src/types/rsvp.ts`, `src/data/rsvpDefaults.ts`, `src/utils/rsvpUtils.ts`, `src/hooks/useInvitationParams.ts`, `src/hooks/useRsvpForm.ts`, `src/hooks/useModal.ts`, `src/hooks/useRsvp.ts`) es 100% global y reutilizable en futuras plantillas mediante `RsvpAdapter` y `RsvpFeatureFlags`, mientras que la capa visual permanece aislada dentro de cada plantilla (p. ej. `src/components/papel-rasgado/`).
 
 ### Módulo 5: El Toque Emocional (Canción y Dedicatoria)
 * **Propósito:** Involucrar al invitado con la celebración antes del evento.

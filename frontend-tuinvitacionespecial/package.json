@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "test": "node --test src/utils/*.test.ts",
     "preview": "astro preview",
     "astro": "astro",
     "backend": "node ../backend/server.mjs"

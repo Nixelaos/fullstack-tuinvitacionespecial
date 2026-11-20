@@ -28,3 +28,9 @@ Mapa de documentación viva del proyecto bajo `02-DOCS/wiki/`.
 | Panel Pre-Envío y Distribución | Importación `.xlsx`/`.csv`, CRUD, `BR-05`, WhatsApp y correo masivo `BR-02` | draft | [panel-pre-envio-y-distribucion.md](./sdd/specs/panel-pre-envio-y-distribucion.md) |
 | Formulario Público R.S.V.P. | Invitación personalizada, `BR-01`, `BR-03` y concurrencia | draft | [rsvp-publico-invitados.md](./sdd/specs/rsvp-publico-invitados.md) |
 | Dashboard Post-Envío | Métricas en vivo, menús, alergias, playlist, muro y exportación | draft | [dashboard-post-envio.md](./sdd/specs/dashboard-post-envio.md) |
+
+## FTD (`02-DOCS/wiki/ftd/`)
+
+| Cambio | Alcance | Estado | Ruta |
+|---|---|---|---|
+| Capa lógica global R.S.V.P. y `useModal` | Frontend (`BR-01`, `BR-03`, `useRsvp`, `useModal`, `papel-rasgado`) | in-progress | [rsvp-logica-global.md](./ftd/rsvp-logica-global.md) |

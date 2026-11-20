@@ -23,6 +23,26 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
 
 ---
 
+## 2026-11-19 — Capa lógica global de R.S.V.P. y `useModal` desacoplados de la plantilla `papel-rasgado`
+
+- **Contexto:** La plantilla `papel-rasgado` contenía acoplados en sus componentes visuales la configuración del evento (`PAPEL_RASGADO_RSVP_CONFIG`), el catálogo de menús (`DEFAULT_MENU_OPTIONS`, con `'Celíaco / Sin Gluten'` desalineado frente a `tipo_menu_enum`), lógica duplicada de modales en RSVP/Gift/PhotoAlbum y un modelo de menús tipo checkboxes únicos incompatible con `BR-01`. Además, futuras plantillas de invitaciones reutilizarán el mismo motor lógico de R.S.V.P. pudiendo ocultar bloques opcionales.
+- **Decisión:**
+  1. **Capa lógica 100% global en `frontend-tuinvitacionespecial/src/`:**
+     - `types/rsvp.ts`: `TipoMenu` alineado 1:1 con `tipo_menu_enum` (`'Celíaco'` exacto), `RsvpSubmissionPayload`, `RsvpFeatureFlags`, `RsvpStepNumbers` y contrato `RsvpAdapter` (`demo` hoy, `api` al conectar Fastify).
+     - `data/rsvpDefaults.ts`: `DEFAULT_MENU_OPTIONS`, `DEFAULT_RSVP_FEATURES`, `RSVP_DEADLINE_EXPIRED_MESSAGE` y `demoRsvpAdapter`.
+     - `utils/rsvpUtils.ts` + `utils/rsvpUtils.test.ts` (`npm test` vía `node --test`): aritmética `BR-01` (1 plato por asistente, reemplazo inteligente de `'Estándar'`, prioridad a restricciones alimentarias al reducir pases), normalización a `cantAsistentes: 0` / `menusSeleccionados: []` cuando `attendance === 'no'` (manteniendo dedicatoria opcional), relleno con `'Estándar'` si `showMenu: false` para no romper `BR-01`, vigencia `BR-03` (`rsvpDeadlineIso` + `formatRsvpDeadlineLabels`), numeración correlativa de pasos y parseo seguro de tokens opacos (`source: 'token' | 'demo' | 'default'`, eliminando el fallback que convertía tokens en nombre y subiendo el límite demo de `10` a `50`).
+     - Hooks compuestos sin "God Hook": `useInvitationParams`, `useRsvpForm`, `useModal` (headless con focus trap `Tab`/`Shift+Tab`, `Escape`, scroll lock con contador y restauración de foco) y `useRsvp` (fachada ligera SSR-safe con verificación en vivo de `BR-03`).
+  2. **Capa visual conservada en `src/components/papel-rasgado/`:**
+     - `PapelRasgadoRsvp`, `PapelRasgadoRsvpForm` (chips `radiogroup` accesibles para 1 asistente y contadores `- / +` por plato para `> 1` asistentes) y `PapelRasgadoRsvpSuccess` mantienen su dirección de arte propia recibiendo configuración, `features` y `adapter` por props.
+     - `PapelRasgadoGift` y `PapelRasgadoPhotoAlbum` migran también al hook global `useModal`, eliminando el boilerplate duplicado y unificando accesibilidad de diálogos.
+- **Alternativas descartadas:**
+  - Mover `PapelRasgadoRsvp` y su estética visual a una carpeta global compartida (descartada para no acoplar futuras plantillas a la estética de sobre flotante, flores y paleta arena de Papel Rasgado).
+  - Construir un único "God Hook" monolítico con estado de modal + URL + formulario + API (descartada por acoplamiento y dificultad de pruebas unitarias).
+  - Relajar `BR-01` en backend para permitir `0` menús cuando una plantilla oculta `showMenu` (descartada; el frontend rellena `'Estándar'` por asistente hasta que exista un flag explícito de dominio en `novios` si algún evento sin banquete lo requiere).
+- **Gobernanza documental:** El archivo `backend-tuinvitacionespecial/Spec-Driven Development (SDD)/Tú Invitación Especial Spec-Driven Development 4142fac3517e807a91d9d3ed20434feb.html` queda congelado como snapshot histórico de solo lectura (origen de Notion); `02-DOCS/wiki/` es la única fuente de verdad viva del proyecto.
+
+---
+
 ## 2026-11-19 — Sesión gestionada en Redis + Cookie HttpOnly (Camino B sobre Google ID Token)
 
 - **Contexto:** El Google ID Token (JWT) emitido al autenticarse con Google expira en ~1 hora, almacenarlo en `localStorage` o `sessionStorage` expone la sesión a ataques XSS, y no permite revocar accesos en tiempo real sin validar en PostgreSQL cada petición.
