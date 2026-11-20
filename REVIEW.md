@@ -1,6 +1,6 @@
 # REVIEW.md — Reglas de revisión de código
 
-> Borrador generado junto con [02-DOCS/wiki/sdd/constitution.md](./02-DOCS/wiki/sdd/constitution.md). Se ratifica junto con la constitución.
+> Reglas ratificadas (`v1.0.0`, 2026-11-20) junto con [02-DOCS/wiki/sdd/constitution.md](./02-DOCS/wiki/sdd/constitution.md).
 
 ## Formato del resumen
 
@@ -17,7 +17,11 @@ Todo reporte de revisión debe abrir con el conteo exacto antes de detallar hall
    - Permitir vincular accesos por encima de `novios.max_accesos`.
    - Editar pases por debajo de `cant_asistentes` sin invalidar la respuesta R.S.V.P. previa.
 3. **Condición de carrera o estado parcial:** Escrituras de R.S.V.P. sin serialización (`SELECT ... FOR UPDATE` o cola por familia) o carga masiva sin transacción ACID (`ROLLBACK` ante fallo).
-4. **Fallo de autenticación / secretos:** Validación incompleta del token Google (`iss`, `aud`, `exp`, `email_verified`), comparación no constante de `MASTER_API_KEY`, o secretos/PII en logs o repositorio.
+4. **Fallo de autenticación, secretos, límites o blindaje HTTP/exportación (Principios 13–18):**
+   - Validación incompleta del token Google (`iss`, `aud`, `exp`, `email_verified`), comparación no constante de `MASTER_API_KEY`, o secretos/PII en logs o repositorio.
+   - Almacenar sesiones fuera de cookie `HttpOnly; Secure; SameSite=Lax` (ej. en `localStorage`/`sessionStorage`) o sin revocación instantánea en Redis.
+   - Omitir validación CSRF (`Origin`/`Referer`) en mutaciones con cookie, o omitir `@fastify/rate-limit`, `@fastify/helmet`, CORS restringido o `bodyLimit` en Fastify.
+   - Introducir columnas `TEXT` o `INTEGER` sin cota fuera de `DB_LIMITS` / `novios.max_familias <= 1000`, o exportar archivos tabulares (`.xlsx`/`.csv`) sin neutralizar Formula Injection (`=`, `+`, `-`, `@`).
 5. **Migración irreversible o desalineada:** Cambio en `src/db/schema.ts` sin su migración en `drizzle/` o pérdida silenciosa de datos sin estrategia explícita.
 6. **Bloqueo de cola o reenvíos duplicados:** Envío masivo síncrono dentro del request HTTP o sin `Idempotency-Key` / verificación de `invitacion_enviada_at`.
 

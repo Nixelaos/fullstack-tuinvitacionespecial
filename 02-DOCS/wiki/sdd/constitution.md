@@ -1,18 +1,18 @@
 ---
 type: constitution
 title: tuinvitacionespecial — Constitution
-description: Principios innegociables del proyecto derivados del SDD funcional y la configuración real del monorepo (borrador pendiente de ratificación).
+description: Principios innegociables del proyecto derivados del SDD funcional y la configuración real del monorepo.
 tags: [sdd, constitution]
-timestamp: 2026-11-19T21:40:00Z
+timestamp: 2026-11-20T11:25:00Z
 topic: sdd
-status: draft
-version: draft
+version: v1.0.0
+ratified: 2026-11-20
 ---
 
 # tuinvitacionespecial — Constitution
 
-> **Borrador pendiente de ratificación explícita.** Reemplaza el esqueleto inicial de `rsc onboard`. Al aprobarlo, retira `status: draft`, fija `version: v1.0.0` y registra la ratificación en el Amendment log.
-> Fuente funcional de origen: [SDD Funcional HTML](../../../backend-tuinvitacionespecial/Spec-Driven%20Development%20%28SDD%29/T%C3%BA%20Invitaci%C3%B3n%20Especial%20Spec-Driven%20Development%204142fac3517e807a91d9d3ed20434feb.html).
+> **Constitución ratificada (`v1.0.0`, 2026-11-20)** junto con [REVIEW.md](../../../REVIEW.md). Toda modificación futura sigue el protocolo append-only del Amendment log.
+> Fuente funcional de origen: [SDD Funcional HTML](../../../backend-tuinvitacionespecial/Spec-Driven%20Development%20%28SDD%29/T%C3%BA%20Invitaci%C3%B3n%20Especial%20Spec-Driven%20Development%204142fac3517e807a91d9d3ed20434feb.html) *(snapshot histórico congelado)*.
 
 ## Known facts (from onboarding)
 
@@ -51,7 +51,7 @@ version: draft
 15. **Aislamiento estricto por cuenta y Anti-IDOR (`BR-06`):** Toda ruta del panel exige acceso `activo = true` para el `novios_id` solicitado y filtra explícitamente en SQL por el `novios_id` autorizado en la sesión (`WHERE id = $id AND novios_id = $noviosId`), prohibiendo consultas por ID aislado; las operaciones de SuperAdmin exigen lista blanca en `admins` o `MASTER_API_KEY` validada en tiempo constante.
 16. **Protección CSRF en mutaciones con cookies:** Además de `SameSite=Lax`, toda petición HTTP mutadora autenticada por cookie (`POST`, `PATCH`, `PUT`, `DELETE`) valida estrictamente las cabeceras `Origin`/`Referer` contra el dominio oficial del frontend.
 17. **Enlaces públicos de alta entropía y Rate Limiting en Redis:** Los `token_enlace` se generan con aleatoriedad criptográfica (`node:crypto`), bloqueando mutaciones tras vencer `rsvp_deadline` (`BR-03`), y la API aplica limitación de tasa en Redis (`@fastify/rate-limit`) sobre el login de Google, las rutas públicas de R.S.V.P. y el disparo de envíos masivos.
-18. **Blindaje perimetral HTTP, CORS y `MASTER_API_KEY`:** La API aplica cabeceras de seguridad mediante `@fastify/helmet`, restringe CORS exclusivamente al dominio oficial del frontend y acota `MASTER_API_KEY` únicamente a rutas administrativas (`/api/admin/*`, protegidas por red/IP en proxy en producción).
+18. **Blindaje perimetral HTTP, CORS, `MASTER_API_KEY`, cotas y exportaciones:** La API aplica cabeceras de seguridad mediante `@fastify/helmet`, restringe CORS exclusivamente al dominio oficial del frontend, aplica `bodyLimit` estricto en Fastify (`64 KiB` global y `512 KiB` exclusivo para el endpoint `batch`), hace cumplir en BD y Zod las cotas de `DB_LIMITS` y `novios.max_familias <= 1000` (prohibiendo nuevas columnas `TEXT`/`INTEGER` sin cota), neutraliza CSV/Spreadsheet Formula Injection (`=`, `+`, `-`, `@`) en toda exportación tabular (`.xlsx`/`.csv`) y acota `MASTER_API_KEY` únicamente a rutas administrativas (`/api/admin/*`, protegidas por red/IP en proxy en producción).
 
 ## 6. UX / accessibility floor
 
@@ -87,3 +87,4 @@ Una funcionalidad o cambio queda terminado solo cuando cumple **todos** estos pu
 | 2026-11-19 | draft | Populated principles from functional SDD and monorepo config; pending user ratification. | Bridge business SDD into ASDD base rules before writing plans and code. |
 | 2026-11-19 | draft | Added global frontend RSVP logic/visual boundary (P10), modal/radiogroup a11y floor (P20), and frontend `tsc`/`node --test` gates (P5–P6). | Sync constitution draft with the global RSVP architecture and `useModal` refactor in `frontend-tuinvitacionespecial/`. |
 | 2026-11-19 | draft | Fixed 7-day Redis session TTL (Camino B) and added security floor pieces 1–4 (CSRF, Anti-IDOR, Rate Limiting, Helmet/CORS/Admin isolation). | User approved security posture before ratification. |
+| 2026-11-20 | v1.0.0 | Ratified constitution v1.0.0 alongside REVIEW.md; expanded P18 with Fastify bodyLimit, DB_LIMITS/max_familias <= 1000, and Formula Injection neutralization. | Explicit user ratification after closing security, DB limits, and export hardening. |

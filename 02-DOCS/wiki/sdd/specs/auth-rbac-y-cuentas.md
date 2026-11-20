@@ -47,7 +47,7 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 
 ## What the user can do
 
-- El SuperAdmin puede crear una nueva cuenta de boda definiendo los nombres de la pareja, el diseño elegido, la fecha opcional del evento, la fecha límite de confirmación obligatoria y el límite máximo de accesos autorizados (mínimo 1, valor inicial 2), así como autorizar o desactivar correos Google para esa boda dentro del cupo permitido.
+- El SuperAdmin puede crear una nueva cuenta de boda definiendo los nombres de la pareja, el diseño elegido, la fecha opcional del evento, la fecha límite de confirmación obligatoria y el límite máximo de accesos autorizados (mínimo 1, valor inicial 3), así como autorizar o desactivar correos Google para esa boda dentro del cupo permitido.
 - Un novio o planner autenticado con Google puede ingresar al panel de la boda si su correo está autorizado y activo: entra directo si tiene 1 boda activa, o elige cuál administrar en un selector de bodas si tiene 2 o más, pudiendo cambiar de boda sin cerrar sesión.
 - Un usuario con 0 bodas activas no puede acceder al panel y ve un aviso claro de cuenta no autorizada.
 - Ni los novios ni los planners pueden alterar la fecha límite, el cupo máximo de accesos ni el catálogo de diseños.
@@ -75,7 +75,8 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
   - El novio o planner inicia sesión con Google; el sistema valida su identidad una sola vez y emite una sesión gestionada y revocable en el servidor (sin guardar credenciales en almacenamiento legible desde el navegador), consulta sus bodas activas y: con exactamente 1 boda activa ingresa directo al panel; con 2 o más bodas activas visualiza el selector para elegir la boda activa y puede conmutar entre ellas sin re-autenticarse.
 - **Edge cases:**
   - Un mismo correo puede autorizarse en distintas bodas, pero no duplicarse dentro de la misma boda.
-  - Si un acceso pasa de activo a inactivo mientras el usuario tenía una boda asignada, sus nuevas acciones sobre esa boda quedan bloqueadas.
+  - Los datos de la boda (lista de invitados, respuestas R.S.V.P. y métricas del dashboard) pertenecen a la cuenta de la boda (`novios_id`) y son compartidos por todos sus accesos activos; desactivar un acceso (`activo = false`) libera ese cupo dentro de `max_accesos` (solo cuentan accesos activos), conserva la trazabilidad de auditoría y nunca borra ni altera el historial del evento.
+  - Si un acceso pasa de activo a inactivo mientras el usuario tenía una boda asignada, sus nuevas acciones sobre esa boda quedan bloqueadas de inmediato.
   - Si la fecha del evento queda sin definir al crear la boda, el selector y los paneles siguen operando apoyándose en la fecha límite de confirmación.
 - **Error paths:**
   - Si un correo inicia sesión con Google y tiene 0 bodas activas (no existe o fue desactivado), el sistema deniega el ingreso sin revelar qué otros correos están registrados en la plataforma.
@@ -84,7 +85,8 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 
 ## Acceptance criteria
 
-- Given un SuperAdmin autenticado y una boda con cupo `max_accesos = 2` que ya tiene 2 accesos registrados, When intenta autorizar un tercer correo sin ampliar el cupo, Then el sistema rechaza la incorporación y conserva exactamente los 2 accesos existentes.
+- Given un SuperAdmin autenticado y una boda con cupo inicial por defecto `max_accesos = 3` que ya tiene `3` accesos **activos** registrados, When intenta autorizar un cuarto correo sin ampliar el cupo ni desactivar uno existente, Then el sistema rechaza la incorporación y conserva exactamente los `3` accesos activos existentes.
+- Given una boda con cupo `max_accesos = 3` y `3` accesos activos con familias y confirmaciones R.S.V.P. ya registradas, When el SuperAdmin desactiva uno de esos accesos (`activo = false`) y autoriza un nuevo correo, Then el correo desactivado pierde acceso de inmediato, el nuevo correo queda habilitado dentro del mismo cupo y todo el historial de invitados y respuestas de la boda permanece intacto.
 - Given un correo `planner@gmail.com` autorizado y activo en 2 bodas distintas, When inicia sesión con Google, Then el sistema lo redirige al selector de bodas mostrando ambas bodas activas y no lo deja operar sin elegir una.
 - Given un usuario autorizado únicamente en la Boda A, When intenta leer o modificar recursos pertenecientes a la Boda B, Then el sistema rechaza la petición por falta de permisos y no filtra ni altera datos de la Boda B.
 - Given un usuario autenticado con Google cuyo correo tiene 0 bodas activas o fue marcado inactivo, When intenta acceder al panel, Then el acceso es denegado con aviso de correo no autorizado.
@@ -93,7 +95,15 @@ Proteger el panel con una contraseña compartida por boda o un enlace secreto si
 
 ## Points to clarify
 
-- **suposición tomada** — La sesión gestionada en el servidor mantiene una vigencia de `7` días (`604 800` segundos) con revocación inmediata al cerrar sesión o desactivar un acceso ([constitution.md](../constitution.md), principio 14). *Base:* equilibrio estándar entre comodidad de edición para novios/planners y caducidad periódica. *Riesgo:* si se requiere renovación deslizante por actividad frente a TTL fijo, se ajusta en `plan`.
-- **pregunta abierta** — ¿El SuperAdmin administrará altas de bodas y accesos desde una interfaz web privada dentro de `/panel` o mediante llamadas/scripts administrativos en la primera versión?
-- **suposición tomada** — Al contar el cupo `max_accesos`, solo se consideran los accesos activos (o todos los registros vinculados a la boda). *Base:* evitar que alguien desactivado consuma permanentemente uno de los 2 cupos gratuitos de la pareja. *Riesgo:* confirmar si un acceso desactivado libera cupo o si debe eliminarse para liberar espacio.
-- **decisión diferida** — Esquemas HTTP exactos (rutas, payloads y códigos de error) del Punto 1 en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md), diferidos para cerrar antes de `plan`.
+- **resuelto** — La sesión gestionada en Redis mantiene un **TTL fijo de `7` días (`604 800` segundos)** desde el login ([constitution.md](../constitution.md), principio 14) con revocación inmediata al cerrar sesión o desactivar un acceso vía índice inverso `user_sessions:<email>`.
+- **resuelto** — El SuperAdmin operará las altas de bodas y accesos en v1 mediante la **API `/api/admin/*` y scripts/cliente HTTP**, dejando la interfaz web `/panel/admin` para una iteración posterior.
+- **resuelto** — Al contar el cupo `max_accesos`, se cuentan únicamente los accesos con `activo = true`. Desactivar un correo (`activo = false`) libera el cupo para autorizar a otra persona sin borrar el registro de auditoría ni perder ningún dato o historial del dashboard de la boda.
+- **resuelto** — El valor por defecto de `max_accesos` al crear una boda se fija en **`3` personas por boda** (ej. novia + novio + wedding planner, rango configurable `1..10`); la migración `0002` actualizará el `DEFAULT 2` actual de `schema.ts`.
+- **resuelto** — El catálogo completo de contratos HTTP (rutas, métodos, schemas Zod y códigos de error) del Punto 1 quedó cerrado en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md).
+
+## Clarifications
+
+- **2026-11-20:** *Conteo de `max_accesos` e historial compartido* → solo cuentan accesos activos (`activo = true`) y desactivar un acceso nunca elimina historial de la boda → porque los invitados, respuestas R.S.V.P. y métricas pertenecen a `novios_id`, permitiendo reemplazar a un usuario o planner sin perder datos ni consumir cupos fantasma.
+- **2026-11-20:** *SuperAdmin API vs. UI en v1* → usar `/api/admin/*` + scripts/cliente HTTP en v1 (dejando `/panel/admin` para después) → porque acelera el lanzamiento manteniendo el mismo contrato backend reutilizable.
+- **2026-11-20:** *Valor por defecto de `max_accesos` y TTL fijo de sesión* → fijar `max_accesos` por defecto en `3` (diferido a migración `0002`) y mantener TTL fijo de `7` días con índice inverso `user_sessions:<email>` en Redis → porque cubre a la pareja más un wedding planner sin configuración extra y mantiene la sesión predecible y revocable al instante.
+- **2026-11-20:** *Contratos HTTP (Punto 1)* → cerrados en [notas-api-y-seguridad.md](../notas-api-y-seguridad.md) (incluyendo `adminId` explícito/resuelto cuando se llame `/api/admin/weddings` con `MASTER_API_KEY`) → porque `novios.admin_id` es `NOT NULL` en BD.

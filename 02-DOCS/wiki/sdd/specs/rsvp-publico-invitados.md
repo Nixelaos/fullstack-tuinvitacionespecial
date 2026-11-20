@@ -61,6 +61,7 @@ Incrustar un formulario externo genérico (como Google Forms) enlazado desde la 
 
 - Regla `BR-01` (tope de pases y `COUNT(rsvp_menus) == cant_asistentes`).
 - Regla `BR-03` (ventana editable hasta `rsvp_deadline` y bloqueo posterior en cliente y servidor).
+- Almacenamiento y comparación de `rsvp_deadline` en servidor en **UTC** (`timestamptz`), interpretando la fecha límite de cierre (`23:59:59`) y su visualización en UI con la zona horaria IANA **`America/Santiago`** como defecto para Chile (con ajuste automático de horario de verano UTC-3 / invierno UTC-4 y soporte opcional de zona horaria por boda con default `'America/Santiago'`).
 - La regla de reemplazo atómico y serialización por familia ante envíos simultáneos definida en Capa 3 del SDD funcional y los principios de integridad transaccional de [constitution.md](../constitution.md).
 
 ## How it proves it
@@ -87,11 +88,16 @@ Incrustar un formulario externo genérico (como Google Forms) enlazado desde la 
 - Given una familia con `2` pases de adulto y `0` niños que abre su enlace antes de la fecha límite, When marca `"Sí asistiré"` e intenta indicar `3` asistentes, Then el formulario impide enviar y muestra `"No puedes exceder el máximo de 2 pases"`.
 - Given una familia con `4` pases que confirma `3` asistentes y selecciona `2` menús `"Vegano"` y `1` `"Estándar"`, When envía el formulario, Then quedan registrados `3` asistentes y exactamente esos `3` menús individuales; y si luego edita a `2` asistentes antes del plazo, los platos previos se reemplazan completamente por los `2` nuevos.
 - Given una boda cuya fecha límite de confirmación venció ayer, When un invitado abre su enlace hoy e intenta confirmar o editar su asistencia, Then ve el formulario en modo lectura con el aviso `"El plazo para confirmar o modificar tu asistencia ha finalizado"` y el servidor rechaza cualquier mutación.
+- Given una boda con cierre configurado para el día límite en zona `America/Santiago`, When un invitado envía su confirmación a las `23:55` hora de Chile del día límite, Then el servidor la acepta comparando el instante UTC; y When intenta enviar o editar a las `00:01` del día siguiente hora de Chile, Then el servidor rechaza la mutación sin depender del reloj local del navegador.
 - Given una familia que previamente había confirmado `2` asistentes con `2` menús, When edita su respuesta marcando `"No asistiré"`, Then los selectores de menú se deshabilitan, el conteo de asistentes queda en `0` y no queda ningún menú asociado a la familia.
 
 ## Points to clarify
 
 - **resuelto (frontend)** — Cuando un invitado marca `"No asistiré"`, se ocultan pases, menús, alergias y canción (normalizando el payload a `cant_asistentes = 0`, `menus_seleccionados = []`, `alergias = ''`, `cancion_favorita = ''`), y se mantiene disponible el campo opcional de dedicatoria (`mensaje_novios`) si la plantilla tiene `features.showDedication` activo.
-- **pregunta abierta (backend)** — ¿Con qué zona horaria canónica se fija y valida `rsvp_deadline` en servidor (UTC explícito o zona horaria de Chile `America/Santiago`)? *(Nota: la capa cliente `isRsvpDeadlinePassed` ya soporta ISO local y timestamps con zona horaria `Z`/`±HH:MM`, priorizando siempre la bandera `isDeadlinePassed` devuelta por la API.)*
+- **resuelto (backend)** — `rsvp_deadline` se almacena y compara en servidor en **UTC** (`timestamptz`), tomando **`America/Santiago`** como zona horaria IANA de negocio por defecto para Chile (interpretación del cierre `23:59:59` con ajuste automático verano UTC-3 / invierno UTC-4 y visualización en UI), con posibilidad de columna `timezone` opcional por boda con default `'America/Santiago'`. *(Nota: la capa cliente `isRsvpDeadlinePassed` ya soporta ISO local y timestamps con zona horaria `Z`/`±HH:MM`, priorizando siempre la bandera `isDeadlinePassed` devuelta por la API.)*
 - **resuelto (frontend)** — El formulario en `frontend-tuinvitacionespecial/` ya fue migrado a `BR-01` (`useRsvpForm`, `rsvpUtils.ts`, `PapelRasgadoRsvpForm.tsx`) con valor canónico exacto `'Celíaco'`, selección única para 1 asistente y contadores `- / +` por plato para `> 1` asistentes (permitiendo repetir menús, ej. `2× Vegano` + `1× Estándar`).
 - **resuelto en capa lógica (multi-plantilla)** — Toda la lógica R.S.V.P. quedó desacoplada a módulos globales (`types/rsvp.ts`, `data/rsvpDefaults.ts`, `utils/rsvpUtils.ts`, `hooks/useInvitationParams.ts`, `hooks/useRsvpForm.ts`, `hooks/useModal.ts`, `hooks/useRsvp.ts`) con adaptador inyectable `RsvpAdapter` y `RsvpFeatureFlags`, dejando la capa visual aislada en cada plantilla (`src/components/<plantilla>/`). Queda diferido únicamente el diseño de nuevas plantillas visuales y la implementación de `apiRsvpAdapter` contra los endpoints de Fastify.
+
+## Clarifications
+
+- **2026-11-20:** *Zona horaria canónica de `rsvp_deadline`* → almacenamiento y comparación en **UTC** en servidor (`timestamptz`) con **`America/Santiago`** como zona horaria IANA de negocio por defecto para Chile → porque la plataforma apunta inicialmente a Chile, maneja cambios de horario verano/invierno sin desfases y mantiene comparaciones inmunes al reloj del cliente.
