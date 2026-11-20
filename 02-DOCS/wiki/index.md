@@ -41,6 +41,12 @@ Mapa de documentación viva del proyecto bajo `02-DOCS/wiki/`.
 |---|---|---|---|
 | Autenticación, RBAC y Cuentas | `GATE: PASS` (`0 CRITICAL`, `0 HIGH`, `3 MEDIUM`, `3 LOW`) | 2026-11-20 | [auth-rbac-y-cuentas.md](./sdd/analysis/auth-rbac-y-cuentas.md) |
 
+### Progreso de implementación (`02-DOCS/wiki/sdd/progress/`)
+
+| Progreso | Estado | Alcance | Ruta |
+|---|---|---|---|
+| Autenticación, RBAC y Cuentas | ready | Micro-cortes `C1`–`C9` + cierre `T023` | [auth-rbac-y-cuentas.md](./sdd/progress/auth-rbac-y-cuentas.md) |
+
 ## FTD (`02-DOCS/wiki/ftd/`)
 
 | Cambio | Alcance | Estado | Ruta |

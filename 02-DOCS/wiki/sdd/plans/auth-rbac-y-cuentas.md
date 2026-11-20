@@ -391,6 +391,27 @@ La implementación se parte en **6 sub-bloques ordenados**, cada uno dentro del 
 7. **Cierre integrado (`T023`):**
    - Depende de todos los bloques incluidos: suite completa sobre PostgreSQL 18.7 y Redis 8.0 reales + verificación de concurrencia `BR-04` + revisión de bloques Tier 2.
 
+### Micro-cortes de revisión humana (`C1`–`C9`)
+
+Para facilitar la lectura y aprobación entre sesiones sin revisar diffs extensos de golpe, `implement` se ejecuta en **micro-cortes atómicos (~40–220 líneas de lógica real por pausa)** mapeados sobre las tareas estables `T001`–`T023`. Tras cada micro-corte:
+
+1. El agente ejecuta `Red → Green`, pasa `build + test` y realiza una auto-revisión previa contra [REVIEW.md](../../../REVIEW.md).
+2. El agente se detiene y entrega una **Ficha de revisión de 5 minutos** separando líneas de lógica real, líneas de tests y archivos generados (`package-lock.json`, `drizzle/meta/`).
+3. Solo tras el visto bueno explícito del usuario se consolida el corte en [progress/auth-rbac-y-cuentas.md](../progress/auth-rbac-y-cuentas.md) y se pasa al siguiente.
+
+| Corte | Tareas | Alcance | Lógica real estimada |
+| --- | --- | --- | --- |
+| **C1** | `T001`–`T002` | Migración BD `0002`, `schema.ts`, `DB_LIMITS`, `MD-PostgreeSQL.sql` | `~40` líneas |
+| **C2** | `T003`–`T005` | Plugins Fastify, `env.ts`, `errors.ts` y guard `csrf.ts` | `~130` líneas |
+| **C3** | `T006`–`T007` | Blindaje perimetral en `src/app.ts` (`helmet`, `cors`, `rate-limit`, `bodyLimit`, DI) | `~100` líneas |
+| **C4** | `T008`–`T009` | Motor de sesiones Redis (`session:<sid>`, `user_sessions:<email>`, cookie) | `~110` líneas |
+| **C5** | `T010`–`T011` | Middlewares `requireAuth`, `requireWeddingAccess` (`BR-06`) y `authAccess.ts` | `~100` líneas |
+| **C6** | `T012`–`T013` | Rutas `POST /api/auth/google`, `GET /api/auth/me` y `POST /api/auth/logout` | `~140` líneas |
+| **C7** | `T014`–`T017` | Guard `requireSuperAdmin` + `/api/admin/weddings` | `~180` líneas |
+| **C8** | `T018`–`T019` | `/api/admin/weddings/:noviosId/accesses` (`BR-04` `FOR UPDATE` + revocación Redis) | `~130` líneas |
+| **C9** | `T020`–`T022` | *(Opcional)* Frontend ingreso Google y selector multi-boda `/panel` | `~220` líneas |
+| **Cierre** | `T023` | Integración real PostgreSQL 18.7 + Redis 8.0 + concurrencia `BR-04` + cierre Tier 2 | Solo tests/verificación |
+
 ---
 
 ## 7. Risks & open decisions
