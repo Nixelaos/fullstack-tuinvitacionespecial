@@ -27,6 +27,8 @@ export interface EventDateFormats {
   rsvpDeadlineDisplay: string;
   /** Fecha límite de confirmación (corta): '01 de Octubre' */
   rsvpDeadlineShort: string;
+  /** Fecha límite de confirmación en formato ISO local de cierre del día: '2027-10-01T23:59:59' */
+  rsvpDeadlineIso: string;
 }
 
 const DAYS_ES = [
@@ -110,11 +112,14 @@ export const generateEventDateFormats = (
   const stampYear = String(year);
   const stampDate = `${pad2(day)}.${SHORT_MONTHS_ES[month - 1]}`;
 
-  // Fecha límite de RSVP
+  // Fecha límite de RSVP (vigente hasta las 23:59:59 del día límite)
   const deadlineDate = new Date(eventDate.getTime() - rsvpDaysBefore * 86400 * 1000);
   const deadlineMonthName = MONTHS_ES[deadlineDate.getMonth()];
   const rsvpDeadlineDisplay = `${pad2(deadlineDate.getDate())} de ${deadlineMonthName} de ${deadlineDate.getFullYear()}`;
   const rsvpDeadlineShort = `${pad2(deadlineDate.getDate())} de ${deadlineMonthName}`;
+  const rsvpDeadlineIso = `${deadlineDate.getFullYear()}-${pad2(
+    deadlineDate.getMonth() + 1
+  )}-${pad2(deadlineDate.getDate())}T23:59:59`;
 
   return {
     iso: isoString,
@@ -128,5 +133,44 @@ export const generateEventDateFormats = (
     stampDate,
     rsvpDeadlineDisplay,
     rsvpDeadlineShort,
+    rsvpDeadlineIso,
+  };
+};
+
+/**
+ * Formatea una fecha ISO (local o con zona horaria) a etiquetas de fecha límite en español.
+ */
+export const formatRsvpDeadlineLabels = (
+  deadlineIso: string
+): { display: string; short: string } | null => {
+  const trimmed = deadlineIso.trim();
+  if (!trimmed) return null;
+
+  const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(trimmed);
+  let parsed: Date;
+
+  if (hasExplicitTimezone) {
+    parsed = new Date(trimmed);
+  } else {
+    const [datePart, timePart = '23:59:59'] = trimmed.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours = 23, minutes = 59, seconds = 59] = timePart
+      .split(':')
+      .map(Number);
+    if (
+      [year, month, day, hours, minutes, seconds].some((n) => Number.isNaN(n))
+    ) {
+      return null;
+    }
+    parsed = new Date(year, month - 1, day, hours, minutes, seconds);
+  }
+
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const day = pad2(parsed.getDate());
+  const monthName = MONTHS_ES[parsed.getMonth()];
+  return {
+    display: `${day} de ${monthName} de ${parsed.getFullYear()}`,
+    short: `${day} de ${monthName}`,
   };
 };

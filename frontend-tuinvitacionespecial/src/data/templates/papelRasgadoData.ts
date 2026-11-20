@@ -1,6 +1,9 @@
-import type { MenuOption, RsvpEventConfig } from '../../types/rsvp';
+import type { RsvpEventConfig } from '../../types/rsvp';
 import { WHATSAPP_NUMBER } from '../siteConfig';
 import { generateEventDateFormats } from '../../utils/dateUtils';
+import { DEFAULT_MENU_OPTIONS } from '../rsvpDefaults';
+
+export { DEFAULT_MENU_OPTIONS };
 
 /**
  * ============================================================================
@@ -19,17 +22,6 @@ export const PAPEL_RASGADO_DATE_FORMATS = generateEventDateFormats(
   6,  // 6 horas de duración para el evento en Google Calendar
   21  // 21 días de anticipación para la fecha límite de RSVP
 );
-
-/**
- * Opciones de menú disponibles para confirmación de los invitados
- */
-export const DEFAULT_MENU_OPTIONS: MenuOption[] = [
-  { id: 'standard', label: 'Estándar' },
-  { id: 'vegetarian', label: 'Vegetariano' },
-  { id: 'vegan', label: 'Vegano' },
-  { id: 'celiac', label: 'Celíaco / Sin Gluten' },
-  { id: 'kids', label: 'Menú Infantil' },
-];
 
 /**
  * Configuración del álbum compartido de recuerdos
@@ -60,6 +52,7 @@ export const PAPEL_RASGADO_RSVP_CONFIG: RsvpEventConfig = {
   location: 'Casona Las Majadas de Pirque, Pirque, Región Metropolitana',
   rsvpDeadlineDisplay: PAPEL_RASGADO_DATE_FORMATS.rsvpDeadlineDisplay,
   rsvpDeadlineShort: PAPEL_RASGADO_DATE_FORMATS.rsvpDeadlineShort,
+  rsvpDeadlineIso: PAPEL_RASGADO_DATE_FORMATS.rsvpDeadlineIso,
   eventDateShort: PAPEL_RASGADO_DATE_FORMATS.displayDateShort,
   whatsappNumber: WHATSAPP_NUMBER,
 };

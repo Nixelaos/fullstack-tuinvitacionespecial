@@ -5,6 +5,7 @@ interface GuestStepperProps {
   value: number;
   min?: number;
   max: number;
+  disabled?: boolean;
   onDecrement: () => void;
   onIncrement: () => void;
   singularLabel?: string;
@@ -24,12 +25,13 @@ export const GuestStepper: React.FC<GuestStepperProps> = ({
   value,
   min = 1,
   max,
+  disabled = false,
   onDecrement,
   onIncrement,
   singularLabel = 'persona confirmada',
   pluralLabel = 'personas confirmadas',
   containerClassName = 'bg-white/80 border border-[#DFCBB5] rounded-xl p-2.5 flex items-center justify-between',
-  buttonClassName = 'w-9 h-9 rounded-lg bg-[#F5ECE0] hover:bg-[#FAF3E8] disabled:opacity-30 disabled:cursor-not-allowed border border-[#DFCBB5] flex items-center justify-center text-[#2F2420] transition-colors cursor-pointer',
+  buttonClassName = 'w-9 h-9 rounded-lg bg-[#F5ECE0] hover:bg-[#FAF3E8] disabled:opacity-30 disabled:cursor-not-allowed border border-[#DFCBB5] flex items-center justify-center text-[#2F2420] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8864E]/60',
   valueClassName = 'font-serif text-xl sm:text-2xl text-[#2F2420] font-bold leading-none',
   valueStyle = { fontFamily: "'Cormorant Garamond', Georgia, serif" },
   sublabelClassName = 'text-[10px] text-[#8C6947] font-medium uppercase tracking-wider',
@@ -39,11 +41,11 @@ export const GuestStepper: React.FC<GuestStepperProps> = ({
       <button
         type="button"
         onClick={onDecrement}
-        disabled={value <= min}
+        disabled={disabled || value <= min}
         aria-label="Disminuir asistentes"
         className={buttonClassName}
       >
-        <Minus className="w-4 h-4" />
+        <Minus className="w-4 h-4" aria-hidden="true" />
       </button>
 
       <div className="flex flex-col items-center" aria-live="polite">
@@ -58,11 +60,11 @@ export const GuestStepper: React.FC<GuestStepperProps> = ({
       <button
         type="button"
         onClick={onIncrement}
-        disabled={value >= max}
+        disabled={disabled || value >= max}
         aria-label="Aumentar asistentes"
         className={buttonClassName}
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-4 h-4" aria-hidden="true" />
       </button>
     </div>
   );

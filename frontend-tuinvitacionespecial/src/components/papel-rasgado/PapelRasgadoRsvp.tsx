@@ -1,22 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check } from 'lucide-react';
+import { X, Check, Loader2, AlertCircle } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
 import { PapelRasgadoFlower } from './PapelRasgadoFlower';
 import { PapelRasgadoRsvpForm } from './rsvp/PapelRasgadoRsvpForm';
 import { PapelRasgadoRsvpSuccess } from './rsvp/PapelRasgadoRsvpSuccess';
-import { useInvitationParams } from '../../hooks/useInvitationParams';
-import { useRsvpForm } from '../../hooks/useRsvpForm';
-import { buildRsvpSalutation } from '../../utils/greetingUtils';
+import { useModal } from '../../hooks/useModal';
+import { useRsvp } from '../../hooks/useRsvp';
 import {
-  buildGoogleCalendarUrl,
-  downloadIcsFile,
-} from '../../utils/calendarUtils';
-import { buildRsvpWhatsAppUrl } from '../../utils/whatsappUtils';
-import {
-  PAPEL_RASGADO_RSVP_CONFIG,
   DEFAULT_MENU_OPTIONS,
-} from '../../data/templates/papelRasgadoData';
+  DEFAULT_MENU_VALUE,
+  demoRsvpAdapter,
+} from '../../data/rsvpDefaults';
+import { PAPEL_RASGADO_RSVP_CONFIG } from '../../data/templates/papelRasgadoData';
+import type {
+  MenuOption,
+  RsvpAdapter,
+  RsvpEventConfig,
+  RsvpFeatureFlags,
+  TipoMenu,
+} from '../../types/rsvp';
 
 export interface PapelRasgadoRsvpProps {
   className?: string;
@@ -28,76 +31,111 @@ export interface PapelRasgadoRsvpProps {
   imageAlt?: string;
   showFlower?: boolean;
   flowerVariant?: 'left' | 'right' | 'gentle';
+  eventConfig?: RsvpEventConfig;
+  menuOptions?: MenuOption[];
+  defaultMenu?: TipoMenu;
+  features?: Partial<RsvpFeatureFlags>;
+  adapter?: RsvpAdapter;
+  defaultGuestName?: string;
+  defaultMaxPasses?: number;
 }
 
 export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
   className = '',
   title = 'Confirmación de Asistencia',
   subtitle = 'R. S. V. P.',
-  message = 'Será un verdadero honor contar con tu presencia. Por favor, confírmanos tu asistencia antes del 25 de Octubre:',
+  message,
   clickPhrase = '(Toca el sobre para confirmar tu asistencia)',
   imageSrc = '/images/sobre.png',
   imageAlt = 'Sobre de confirmación de asistencia (R.S.V.P.)',
   showFlower = true,
   flowerVariant = 'left',
+  eventConfig = PAPEL_RASGADO_RSVP_CONFIG,
+  menuOptions = DEFAULT_MENU_OPTIONS,
+  defaultMenu = DEFAULT_MENU_VALUE,
+  features,
+  adapter = demoRsvpAdapter,
+  defaultGuestName,
+  defaultMaxPasses,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  const { guestName, maxPasses } = useInvitationParams();
+  const {
+    isOpen,
+    mounted,
+    open: openModal,
+    close: closeModal,
+    focusDialog,
+    dialogRef,
+  } = useModal();
 
   const {
+    guest,
+    eventConfig: effectiveEventConfig,
+    features: resolvedFeatures,
+    stepNumbers,
+    salutationText,
+    googleCalendarUrl,
+    whatsAppUrl,
+    handleDownloadIcs,
+    isLoading,
+    loadError,
+    isDeadlinePassed,
+    deadlineExpiredMessage,
     formValues,
+    menuCounts,
+    assignedMenusCount,
+    remainingMenusCount,
     isSubmitted,
     isSubmitting,
+    validationError,
+    submitError,
+    canIncrementMenuOption,
     setAttendance,
     decrementAttendees,
     incrementAttendees,
-    toggleMenu,
+    selectMenuForSingleAttendee,
+    incrementMenu,
+    decrementMenu,
     updateTextField,
     handleSubmit,
     resetSubmission,
-  } = useRsvpForm({ maxPasses });
-
-  const salutationText = buildRsvpSalutation(guestName, maxPasses);
-  const googleCalendarUrl = buildGoogleCalendarUrl(PAPEL_RASGADO_RSVP_CONFIG);
-  const whatsAppUrl = buildRsvpWhatsAppUrl({
-    guestName,
-    maxPasses,
-    formValues,
-    config: PAPEL_RASGADO_RSVP_CONFIG,
+  } = useRsvp({
+    eventConfig,
+    menuOptions,
+    defaultMenu,
+    features,
+    adapter,
+    defaultGuestName,
+    defaultMaxPasses,
   });
 
-  const handleDownloadIcs = () => {
-    downloadIcsFile(PAPEL_RASGADO_RSVP_CONFIG);
-  };
-
+  // Retener foco dentro del diálogo cuando cambia la vista interna (formulario <-> éxito / carga)
+  const prevViewKeyRef = useRef<string | null>(null);
+  const currentViewKey = `${isLoading}-${Boolean(loadError)}-${isSubmitted}`;
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!isOpen) {
+      prevViewKeyRef.current = currentViewKey;
+      return;
+    }
+    if (
+      prevViewKeyRef.current !== null &&
+      prevViewKeyRef.current !== currentViewKey
+    ) {
+      focusDialog();
+    }
+    prevViewKeyRef.current = currentViewKey;
+  }, [isOpen, currentViewKey, focusDialog]);
 
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
+  const resolvedMessage =
+    message ??
+    `Será un verdadero honor contar con tu presencia. Por favor, confírmanos tu asistencia antes del ${effectiveEventConfig.rsvpDeadlineShort}:`;
 
-  // Cerrar con tecla Escape y bloquear el scroll del fondo mientras el modal está abierto
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeModal();
-      }
-    };
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
+  const envelopeActionLabel = isDeadlinePassed
+    ? isSubmitted
+      ? 'Ver confirmación de asistencia (plazo finalizado)'
+      : 'Ver invitación (plazo de confirmación finalizado)'
+    : isSubmitted
+    ? 'Ver o modificar confirmación de asistencia'
+    : clickPhrase;
 
   return (
     <div
@@ -147,13 +185,15 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
           {/* Mensaje breve */}
           <p className="text-xs sm:text-sm text-[#7D5F48] leading-relaxed max-w-xs sm:max-w-sm mb-5">
             {isSubmitted
-              ? '¡Gracias por responder! Ya hemos registrado tu confirmación. Puedes tocar el sobre para revisar los detalles o realizar modificaciones:'
-              : message}
+              ? isDeadlinePassed
+                ? '¡Gracias por responder! Ya hemos registrado tu confirmación. Puedes tocar el sobre para revisar los detalles:'
+                : '¡Gracias por responder! Ya hemos registrado tu confirmación. Puedes tocar el sobre para revisar los detalles o realizar modificaciones:'
+              : isDeadlinePassed
+              ? `${deadlineExpiredMessage}. Puedes tocar el sobre para ver los detalles de la invitación:`
+              : resolvedMessage}
           </p>
 
-          {/* ZONA INTERACTIVA DEL SOBRE:
-              Al clickear en el sobre o cerca de este, se abre el recuadro desplegable con los campos RSVP.
-              El bloque entero (imagen y frase) flota lentamente de arriba a abajo directamente sobre el fondo. */}
+          {/* ZONA INTERACTIVA DEL SOBRE */}
           <div
             onClick={openModal}
             role="button"
@@ -165,8 +205,8 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
               }
             }}
             className="group cursor-pointer select-none w-full max-w-[280px] sm:max-w-[300px] flex flex-col items-center p-2 rounded-2xl transition-transform duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#B87A4A]/40"
-            title={isSubmitted ? 'Ver o modificar respuesta' : clickPhrase}
-            aria-label={isSubmitted ? 'Ver o modificar confirmación de asistencia' : clickPhrase}
+            title={envelopeActionLabel}
+            aria-label={envelopeActionLabel}
           >
             {/* Contenedor animado que se mueve lentamente de arriba a abajo */}
             <div className="animate-float-slow-rsvp flex flex-col items-center">
@@ -185,33 +225,39 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
                     className="absolute -top-1.5 -right-1.5 z-20 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md animate-in zoom-in-75 duration-300"
                     title="Asistencia confirmada"
                   >
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
                   </div>
                 )}
               </div>
 
               {/* Frase animada para que clickeen, moviéndose junto al sobre */}
               <p className="mt-2.5 text-xs sm:text-[13px] font-medium text-[#8C5E35] group-hover:text-[#6D421F] transition-colors duration-300 tracking-wide text-center">
-                {isSubmitted ? '(¡Respuesta enviada! Toca para verla)' : clickPhrase}
+                {isSubmitted
+                  ? '(¡Respuesta enviada! Toca para verla)'
+                  : isDeadlinePassed
+                  ? '(Plazo cerrado — Toca para revisar)'
+                  : clickPhrase}
               </p>
             </div>
           </div>
         </div>
       </ScrollReveal>
 
-      {/* RECUADRO DESPLEGABLE CON PORTAL A DOCUMENT.BODY (FLOTANDO POR ENCIMA DE TODA LA PÁGINA Y DIVISORES) */}
+      {/* RECUADRO DESPLEGABLE CON PORTAL A DOCUMENT.BODY */}
       {isOpen && mounted && typeof document !== 'undefined'
         ? createPortal(
             <div
               className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm transition-opacity duration-300"
               onClick={closeModal}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="rsvp-modal-title"
             >
               <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rsvp-modal-title"
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-[380px] sm:max-w-[430px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col text-left animate-in fade-in zoom-in-95 duration-200"
+                className="relative w-full max-w-[380px] sm:max-w-[430px] max-h-[90dvh] overflow-y-auto bg-[#FAF3EB] border-2 border-[#CDB8A3] rounded-2xl p-5 sm:p-7 shadow-[0_25px_60px_rgba(30,15,5,0.45)] flex flex-col text-left animate-in fade-in zoom-in-95 duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50"
               >
                 {/* Filete interior sutil tipo papelería de alta gama con bordes definidos */}
                 <div className="absolute inset-2 sm:inset-2.5 border-2 border-[#E0D2C2] rounded-xl pointer-events-none" />
@@ -220,34 +266,86 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer"
+                  className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white border-2 border-[#CDB8A3] flex items-center justify-center text-[#8C6947] hover:text-[#2F2420] transition-colors shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]"
                   aria-label="Cerrar confirmación de asistencia"
                 >
-                  <X className="w-4 h-4 stroke-[2.5]" />
+                  <X className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
                 </button>
 
-                {/* Formulario RSVP o Pantalla de Éxito */}
+                {/* Contenido del Modal: Carga, Error, Formulario o Éxito */}
                 <div className="relative z-10 w-full pt-1">
-                  {!isSubmitted ? (
+                  {isLoading ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
+                      <Loader2
+                        className="w-6 h-6 text-[#B8864E] animate-spin"
+                        aria-hidden="true"
+                      />
+                      <p
+                        id="rsvp-modal-title"
+                        className="text-xs sm:text-sm text-[#7D5F48]"
+                      >
+                        Cargando datos de tu invitación...
+                      </p>
+                    </div>
+                  ) : loadError ? (
+                    <div
+                      role="alert"
+                      className="py-8 flex flex-col items-center text-center space-y-3"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-[#FAF3E8] border border-[#DFCBB5] flex items-center justify-center text-[#A04E32]">
+                        <AlertCircle className="w-6 h-6" aria-hidden="true" />
+                      </div>
+                      <h3
+                        id="rsvp-modal-title"
+                        className="font-serif text-xl text-[#2F2420]"
+                        style={{
+                          fontFamily: "'Cormorant Garamond', Georgia, serif",
+                        }}
+                      >
+                        No pudimos abrir tu invitación
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#6E5542] max-w-xs leading-relaxed">
+                        {loadError}
+                      </p>
+                    </div>
+                  ) : !isSubmitted ? (
                     <PapelRasgadoRsvpForm
+                      subtitle={subtitle}
                       salutationText={salutationText}
-                      maxPasses={maxPasses}
-                      menuOptions={DEFAULT_MENU_OPTIONS}
-                      rsvpDeadlineDisplay={PAPEL_RASGADO_RSVP_CONFIG.rsvpDeadlineDisplay}
+                      maxPasses={guest.maxPasses}
+                      menuOptions={menuOptions}
+                      rsvpDeadlineDisplay={
+                        effectiveEventConfig.rsvpDeadlineDisplay
+                      }
+                      features={resolvedFeatures}
+                      stepNumbers={stepNumbers}
                       formValues={formValues}
+                      menuCounts={menuCounts}
+                      assignedMenusCount={assignedMenusCount}
+                      remainingMenusCount={remainingMenusCount}
                       isSubmitting={isSubmitting}
+                      isDeadlinePassed={isDeadlinePassed}
+                      deadlineExpiredMessage={deadlineExpiredMessage}
+                      validationError={validationError}
+                      submitError={submitError}
+                      canIncrementMenuOption={canIncrementMenuOption}
                       onSetAttendance={setAttendance}
                       onDecrementAttendees={decrementAttendees}
                       onIncrementAttendees={incrementAttendees}
-                      onToggleMenu={toggleMenu}
+                      onSelectSingleMenu={selectMenuForSingleAttendee}
+                      onIncrementMenu={incrementMenu}
+                      onDecrementMenu={decrementMenu}
                       onUpdateTextField={updateTextField}
                       onSubmit={handleSubmit}
                     />
                   ) : (
                     <PapelRasgadoRsvpSuccess
-                      guestName={guestName}
+                      guestName={guest.guestName}
                       formValues={formValues}
-                      eventConfig={PAPEL_RASGADO_RSVP_CONFIG}
+                      eventConfig={effectiveEventConfig}
+                      features={resolvedFeatures}
+                      isDeadlinePassed={isDeadlinePassed}
+                      deadlineExpiredMessage={deadlineExpiredMessage}
                       googleCalendarUrl={googleCalendarUrl}
                       whatsAppUrl={whatsAppUrl}
                       onDownloadIcs={handleDownloadIcs}
@@ -260,7 +358,7 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="relative z-10 mt-5 mx-auto text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer"
+                  className="relative z-10 mt-5 mx-auto text-xs font-bold text-[#8C6947] hover:text-[#2F2420] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B8864E]/50 rounded px-2 py-0.5"
                 >
                   Cerrar
                 </button>
