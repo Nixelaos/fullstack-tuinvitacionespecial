@@ -8,6 +8,13 @@
       "when": 1794854024269,
       "tag": "0000_shallow_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795172135356,
+      "tag": "0001_slim_doorman",
+      "breakpoints": true
     }
   ]
 }

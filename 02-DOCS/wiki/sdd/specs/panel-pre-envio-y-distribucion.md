@@ -62,6 +62,7 @@ Aceptar únicamente un formulario manual fila por fila y dar un enlace genérico
 
 - La regla `BR-02` (distribución dual WhatsApp granular / correo masivo en segundo plano tras modal obligatorio de confirmación).
 - La regla `BR-05` (si se editan los pases de una familia y `num_adultos + num_ninos` cae por debajo de los asistentes ya confirmados, se invalida su confirmación previa y sus menús para que vuelva a confirmar dentro del nuevo cupo).
+- El tope máximo de **1.000 registros de familias invitadas (`familias_invitadas`) por boda** (`novios.max_familias`, valor inicial y máximo `1000`) y los límites seguros de longitud y pases de la base de datos (máximo `20` adultos, `15` niños y `30` pases totales por familia), verificados tanto en la previsualización del cliente como dentro de la transacción ACID en el servidor.
 - El aislamiento por boda (`BR-06`) definido en [auth-rbac-y-cuentas.md](./auth-rbac-y-cuentas.md) y los principios de usabilidad y asincronía de [constitution.md](../constitution.md).
 
 ## How it proves it
@@ -77,6 +78,7 @@ Aceptar únicamente un formulario manual fila por fila y dar un enlace genérico
   - En distribución, al redactar el mensaje compartido se actualiza una vista previa usando los datos reales de la familia seleccionada; el botón de WhatsApp abre `wa.me` con el teléfono (si existe) y el mensaje codificado; el botón de correo masivo abre un modal con total de destinatarios, asunto y borrador de ejemplo, y solo tras confirmar ejecuta el envío en segundo plano actualizando el estado de envío de cada fila.
 - **Edge cases:**
   - Si un archivo CSV proviene de Excel en español en Windows (separado por `;` y ANSI/Windows-1252), los caracteres como `ñ` y tildes se conservan sin corrupción.
+  - Si un archivo `.xlsx` o `.csv` contiene **más de 1.000 filas de datos** (`1.001` o más registros, sin contar la fila de encabezados) o supera el cupo disponible restante hasta `1.000` (`novios.max_familias`), el asistente debe mostrar un aviso claro indicando que **solo se importarán los primeros 1.000 registros** (o los `N` restantes disponibles hasta alcanzar `1.000`), recortando el excedente antes de pasar a la previsualización y confirmación; además, el servidor valida el tope de `max_familias` dentro de la transacción de guardado.
   - Si una familia no tiene teléfono cargado, no impide guardar el registro ni enviar por correo, aunque la apertura directa por WhatsApp requiere teléfono o copiado manual.
   - Si los novios editan los pases de una familia confirmada aumentándolos o manteniéndolos iguales o superiores a lo confirmado, la confirmación R.S.V.P. se conserva intacta; solo si el nuevo tope es menor se invalida (`BR-05`).
 - **Error paths:**
@@ -88,6 +90,7 @@ Aceptar únicamente un formulario manual fila por fila y dar un enlace genérico
 
 - Given un novio autenticado en el panel Pre-Envío, When importa un archivo `.csv` o `.xlsx` válido con 50 familias (tras revisar mapeo y staging), Then las 50 familias quedan guardadas de forma atómica con enlaces amigables únicos y estado pendiente de envío.
 - Given un archivo `.csv` en codificación Windows-1252 con delimitador `;` y apellidos con tildes o `ñ`, When se carga en el asistente de importación, Then los nombres aparecen correctamente acentuados sin caracteres corruptos y con las columnas detectadas.
+- Given un archivo `.xlsx` o `.csv` con `1005` filas de datos (sin contar encabezados) para una boda con `0` familias previas, When el usuario lo carga en el asistente de importación, Then el sistema muestra un aviso claro indicando que solo se importarán los primeros `1000` registros y recorta el lote a exactamente esas primeras `1000` filas antes de previsualizar y confirmar.
 - Given una familia que ya confirmó `3` asistentes y tiene asignados `3` adultos y `1` niño, When los novios editan la familia a `2` adultos y `0` niños, Then su confirmación R.S.V.P. previa y sus platos asociados quedan eliminados para que vuelva a confirmar dentro de sus `2` nuevos pases.
 - Given una plantilla de mensaje con `{familia}`, `{enlace}` y `{pases}` y una familia seleccionada en la vista previa, When el usuario observa el borrador o pulsa el botón de WhatsApp, Then ve los datos reales interpolados y se abre `wa.me` con el mensaje listo.
 - Given 50 familias con correo válido cargadas, When el usuario pulsa "Enviar invitaciones por Correo", Then aparece primero el modal de confirmación con el conteo de destinatarios y el borrador de muestra, y solo tras confirmar se encola el envío y se registra la fecha de envío por fila.

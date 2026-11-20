@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { GuestStepper } from '../../common/GuestStepper';
+import { RSVP_FIELD_LIMITS } from '../../../data/rsvpDefaults';
 import type {
   AttendanceStatus,
   MenuOption,
@@ -499,6 +500,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
                     <input
                       id="rsvp-allergies"
                       type="text"
+                      maxLength={RSVP_FIELD_LIMITS.allergiesMaxLength}
                       disabled={isDeadlinePassed}
                       value={allergies}
                       onChange={(e) =>
@@ -535,7 +537,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
               <input
                 id="rsvp-song"
                 type="text"
-                maxLength={200}
+                maxLength={RSVP_FIELD_LIMITS.songMaxLength}
                 disabled={isDeadlinePassed}
                 value={song}
                 onChange={(e) => onUpdateTextField('song', e.target.value)}
@@ -577,6 +579,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
           <textarea
             id="rsvp-dedication"
             rows={3}
+            maxLength={RSVP_FIELD_LIMITS.dedicationMaxLength}
             disabled={isDeadlinePassed}
             value={dedication}
             onChange={(e) => onUpdateTextField('dedication', e.target.value)}

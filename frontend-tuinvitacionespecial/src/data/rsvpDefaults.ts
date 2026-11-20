@@ -8,6 +8,16 @@ import type {
 export const DEFAULT_MENU_VALUE: TipoMenu = 'Estándar';
 
 /**
+ * Límites de longitud y cupos alineados con la base de datos (schema.ts).
+ */
+export const RSVP_FIELD_LIMITS = {
+  maxPassesPerFamily: 30,
+  allergiesMaxLength: 300,
+  songMaxLength: 120,
+  dedicationMaxLength: 500,
+} as const;
+
+/**
  * Opciones de menú globales alineadas con `tipo_menu_enum` del backend.
  */
 export const DEFAULT_MENU_OPTIONS: MenuOption[] = [

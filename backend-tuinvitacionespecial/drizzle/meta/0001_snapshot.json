@@ -1,0 +1,618 @@
+{
+  "id": "3ba3e13e-93a4-46ce-8fc8-5ffaa2d7dab1",
+  "prevId": "aae9dab6-76ba-4992-a073-29d8bf5a533c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.accesos_autorizados": {
+      "name": "accesos_autorizados",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "novios_id": {
+          "name": "novios_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "autorizado_por_admin_id": {
+          "name": "autorizado_por_admin_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_google": {
+          "name": "email_google",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_accesos_autorizados_novios_id": {
+          "name": "idx_accesos_autorizados_novios_id",
+          "columns": [
+            {
+              "expression": "novios_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_accesos_autorizados_email_google": {
+          "name": "idx_accesos_autorizados_email_google",
+          "columns": [
+            {
+              "expression": "email_google",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_accesos_autorizados_admin_id": {
+          "name": "idx_accesos_autorizados_admin_id",
+          "columns": [
+            {
+              "expression": "autorizado_por_admin_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "accesos_autorizados_novios_id_novios_id_fk": {
+          "name": "accesos_autorizados_novios_id_novios_id_fk",
+          "tableFrom": "accesos_autorizados",
+          "tableTo": "novios",
+          "columnsFrom": [
+            "novios_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "accesos_autorizados_autorizado_por_admin_id_admins_id_fk": {
+          "name": "accesos_autorizados_autorizado_por_admin_id_admins_id_fk",
+          "tableFrom": "accesos_autorizados",
+          "tableTo": "admins",
+          "columnsFrom": [
+            "autorizado_por_admin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_accesos_novios_email": {
+          "name": "uq_accesos_novios_email",
+          "nullsNotDistinct": false,
+          "columns": [
+            "novios_id",
+            "email_google"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.admins": {
+      "name": "admins",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_google": {
+          "name": "email_google",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "admins_email_google_unique": {
+          "name": "admins_email_google_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email_google"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.familias_invitadas": {
+      "name": "familias_invitadas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "novios_id": {
+          "name": "novios_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_enlace": {
+          "name": "token_enlace",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "familia_nombre": {
+          "name": "familia_nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "num_adultos": {
+          "name": "num_adultos",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "num_ninos": {
+          "name": "num_ninos",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "mensaje_personalizado": {
+          "name": "mensaje_personalizado",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "invitacion_enviada_at": {
+          "name": "invitacion_enviada_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_familias_invitadas_novios_id": {
+          "name": "idx_familias_invitadas_novios_id",
+          "columns": [
+            {
+              "expression": "novios_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "familias_invitadas_novios_id_novios_id_fk": {
+          "name": "familias_invitadas_novios_id_novios_id_fk",
+          "tableFrom": "familias_invitadas",
+          "tableTo": "novios",
+          "columnsFrom": [
+            "novios_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "familias_invitadas_token_enlace_unique": {
+          "name": "familias_invitadas_token_enlace_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_enlace"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_familias_num_adultos": {
+          "name": "chk_familias_num_adultos",
+          "value": "\"familias_invitadas\".\"num_adultos\" >= 1 AND \"familias_invitadas\".\"num_adultos\" <= 20"
+        },
+        "chk_familias_num_ninos": {
+          "name": "chk_familias_num_ninos",
+          "value": "\"familias_invitadas\".\"num_ninos\" >= 0 AND \"familias_invitadas\".\"num_ninos\" <= 15"
+        },
+        "chk_familias_total_pases": {
+          "name": "chk_familias_total_pases",
+          "value": "\"familias_invitadas\".\"num_adultos\" + \"familias_invitadas\".\"num_ninos\" <= 30"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.novios": {
+      "name": "novios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombres_pareja": {
+          "name": "nombres_pareja",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug_plantilla": {
+          "name": "slug_plantilla",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_evento": {
+          "name": "fecha_evento",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rsvp_deadline": {
+          "name": "rsvp_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_accesos": {
+          "name": "max_accesos",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2
+        },
+        "max_familias": {
+          "name": "max_familias",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1000
+        },
+        "plantilla_mensaje": {
+          "name": "plantilla_mensaje",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_novios_admin_id": {
+          "name": "idx_novios_admin_id",
+          "columns": [
+            {
+              "expression": "admin_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "novios_admin_id_admins_id_fk": {
+          "name": "novios_admin_id_admins_id_fk",
+          "tableFrom": "novios",
+          "tableTo": "admins",
+          "columnsFrom": [
+            "admin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_novios_max_accesos": {
+          "name": "chk_novios_max_accesos",
+          "value": "\"novios\".\"max_accesos\" >= 1 AND \"novios\".\"max_accesos\" <= 10"
+        },
+        "chk_novios_max_familias": {
+          "name": "chk_novios_max_familias",
+          "value": "\"novios\".\"max_familias\" >= 1 AND \"novios\".\"max_familias\" <= 1000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.respuestas_rsvp": {
+      "name": "respuestas_rsvp",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "familia_id": {
+          "name": "familia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asistencia_confirmada": {
+          "name": "asistencia_confirmada",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cant_asistentes": {
+          "name": "cant_asistentes",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alergias": {
+          "name": "alergias",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancion_favorita": {
+          "name": "cancion_favorita",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mensaje_novios": {
+          "name": "mensaje_novios",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "respuestas_rsvp_familia_id_familias_invitadas_id_fk": {
+          "name": "respuestas_rsvp_familia_id_familias_invitadas_id_fk",
+          "tableFrom": "respuestas_rsvp",
+          "tableTo": "familias_invitadas",
+          "columnsFrom": [
+            "familia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "respuestas_rsvp_familia_id_unique": {
+          "name": "respuestas_rsvp_familia_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "familia_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_respuestas_cant_asistentes": {
+          "name": "chk_respuestas_cant_asistentes",
+          "value": "\"respuestas_rsvp\".\"cant_asistentes\" >= 0 AND \"respuestas_rsvp\".\"cant_asistentes\" <= 30"
+        },
+        "chk_respuestas_asistencia_consistente": {
+          "name": "chk_respuestas_asistencia_consistente",
+          "value": "(\"respuestas_rsvp\".\"asistencia_confirmada\" = false AND \"respuestas_rsvp\".\"cant_asistentes\" = 0) OR (\"respuestas_rsvp\".\"asistencia_confirmada\" = true AND \"respuestas_rsvp\".\"cant_asistentes\" >= 1)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.rsvp_menus": {
+      "name": "rsvp_menus",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "respuesta_id": {
+          "name": "respuesta_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo_menu": {
+          "name": "tipo_menu",
+          "type": "tipo_menu_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_rsvp_menus_respuesta_id": {
+          "name": "idx_rsvp_menus_respuesta_id",
+          "columns": [
+            {
+              "expression": "respuesta_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "rsvp_menus_respuesta_id_respuestas_rsvp_id_fk": {
+          "name": "rsvp_menus_respuesta_id_respuestas_rsvp_id_fk",
+          "tableFrom": "rsvp_menus",
+          "tableTo": "respuestas_rsvp",
+          "columnsFrom": [
+            "respuesta_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.tipo_menu_enum": {
+      "name": "tipo_menu_enum",
+      "schema": "public",
+      "values": [
+        "Estándar",
+        "Vegetariano",
+        "Vegano",
+        "Celíaco",
+        "Menú Infantil"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

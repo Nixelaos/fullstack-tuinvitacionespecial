@@ -67,3 +67,17 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
      - **Blindaje perimetral:** `@fastify/helmet`, CORS restringido al dominio del frontend y aislamiento de `MASTER_API_KEY` en `/api/admin/*`.
   3. Actualizar el HTML del SDD funcional (`Tú Invitación Especial Spec-Driven Development...html`) para reflejar el Camino B y mantener alineada la documentación origen.
 - **Pendiente restante:** Cerrar el **Punto 1** de `notas-api-y-seguridad.md` (catálogo exacto de rutas, métodos, schemas Zod y códigos de error HTTP).
+
+---
+
+## 2026-11-20 — Endurecimiento de topes en base de datos y límite de 1.000 registros de invitados por boda
+
+- **Contexto:** La Fase 1 del esquema PostgreSQL incluía columnas `TEXT` sin límite (`plantilla_mensaje`, `mensaje_personalizado`, `alergias`, `mensaje_novios`), columnas `INTEGER` sin cota superior (`max_accesos`, `num_adultos`, `num_ninos`, `cant_asistentes`), `VARCHAR` sobredimensionados y carecía de tope de registros de invitados por boda, exponiendo el sistema a amplificación de filas (`rsvp_menus`), abuso de almacenamiento y consumo desmedido de envíos en Resend.
+- **Decisión:**
+  1. **Acotar longitudes de texto y rangos numéricos en `schema.ts`, migración Drizzle (`0001_slim_doorman.sql`), `MD-PostgreeSQL.sql`, `DB_LIMITS` (`src/schemas/common.ts`) y `RSVP_FIELD_LIMITS` (`frontend-tuinvitacionespecial/`):**
+     - Eliminar todas las columnas `TEXT` e `INTEGER` sin cota, reemplazándolas por `VARCHAR(N)` y `SMALLINT` con restricciones `CHECK` explícitas (`max_accesos` `1..10`, `num_adultos` `1..20`, `num_ninos` `0..15`, `num_adultos + num_ninos <= 30`, `cant_asistentes` `0..30`, `alergias` `300`, `cancion_favorita` `120`, `mensaje_novios` `500`, `mensaje_personalizado` `300`, `plantilla_mensaje` `1000`, correos `160`, nombres `80`/`100`, `slug_plantilla` `50`, `token_enlace` `80`, `telefono` `20`).
+     - Añadir restricción SQL de consistencia `chk_respuestas_asistencia_consistente` en `respuestas_rsvp` (`asistencia_confirmada = false` requiere `cant_asistentes = 0`; `true` requiere `>= 1`).
+  2. **Tope de 1.000 familias invitadas por boda (`novios.max_familias`):**
+     - Añadir columna `max_familias` (`SMALLINT DEFAULT 1000 NOT NULL`, `CHECK (1..1000)`) en `novios`.
+     - En la importación masiva `.xlsx`/`.csv` (`panel-pre-envio-y-distribucion.md`), si el archivo supera `1.000` filas de datos (1.001 o más) o excede el cupo disponible restante hasta `1.000`, el cliente muestra un aviso claro indicando que solo se importarán los primeros `1.000` registros (o los restantes disponibles) y recorta el excedente antes de previsualizar/confirmar; el servidor valida además este tope dentro de la transacción.
+- **Alternativas descartadas:** Mantener `TEXT` e `INTEGER` abiertos confiando solo en validación en memoria o `maxLength` del navegador (descartada por riesgo de DoS y falta de integridad en base de datos).

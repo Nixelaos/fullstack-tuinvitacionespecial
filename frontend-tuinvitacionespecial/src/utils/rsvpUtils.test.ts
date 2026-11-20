@@ -195,6 +195,18 @@ describe('parseInvitationSearchParams — separación demo vs token opaco', () =
     assert.equal(parsed.maxPasses, 14);
   });
 
+  it('acepta hasta 30 pases en modo demo y descarta valores por encima de 30', () => {
+    const atLimit = parseInvitationSearchParams('?n=Familia+Soto&pases=30');
+    assert.equal(atLimit.source, 'demo');
+    assert.equal(atLimit.guestName, 'Familia Soto');
+    assert.equal(atLimit.maxPasses, 30);
+
+    const overLimit = parseInvitationSearchParams('?n=Familia+Soto&pases=31');
+    assert.equal(overLimit.source, 'demo');
+    assert.equal(overLimit.guestName, 'Familia Soto');
+    assert.equal(overLimit.maxPasses, 2);
+  });
+
   it('decodifica tokens Base64 JSON válidos en modo demo', () => {
     const encoded = Buffer.from(
       JSON.stringify({ n: 'Camila', p: 3 }),

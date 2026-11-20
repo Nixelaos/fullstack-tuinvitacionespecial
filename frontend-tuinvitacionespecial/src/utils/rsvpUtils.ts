@@ -2,6 +2,7 @@ import {
   DEFAULT_MENU_OPTIONS,
   DEFAULT_MENU_VALUE,
   DEFAULT_RSVP_FEATURES,
+  RSVP_FIELD_LIMITS,
 } from '../data/rsvpDefaults.ts';
 import type {
   AttendanceStatus,
@@ -341,7 +342,7 @@ export const parseInvitationSearchParams = (
   const {
     defaultGuestName = 'Familia García',
     defaultMaxPasses = 2,
-    maxDemoPasses = 50,
+    maxDemoPasses = RSVP_FIELD_LIMITS.maxPassesPerFamily,
   } = options;
 
   const params = new URLSearchParams(search);
