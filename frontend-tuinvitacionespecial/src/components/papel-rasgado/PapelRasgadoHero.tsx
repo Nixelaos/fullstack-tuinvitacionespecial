@@ -4,24 +4,24 @@ interface PapelRasgadoHeroProps {
   isSprayed: boolean;
 }
 
-export const PapelRasgadoHero: React.FC<PapelRasgadoHeroProps> = ({ isSprayed }) => {
+export function PapelRasgadoHero({ isSprayed }: PapelRasgadoHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isEffectFading, setIsEffectFading] = useState(false);
   const [isEffectEnded, setIsEffectEnded] = useState(false);
 
   // Trigger slow fade-out near the end of video duration (~5.16s)
-  const handleVideoTimeUpdate = () => {
+  function handleVideoTimeUpdate() {
     const video = videoRef.current;
     if (!video || !video.duration) return;
     if (video.duration - video.currentTime <= 1.8) {
       setIsEffectFading(true);
     }
-  };
+  }
 
-  const handleVideoEnded = () => {
+  function handleVideoEnded() {
     setIsEffectFading(true);
     setIsEffectEnded(true);
-  };
+  }
 
   // Video playback control: single play upon spray reveal
   useEffect(() => {
@@ -97,7 +97,7 @@ export const PapelRasgadoHero: React.FC<PapelRasgadoHeroProps> = ({ isSprayed })
       </div>
     </section>
   );
-};
+}
 
 export const BeachHero = PapelRasgadoHero;
 export type { PapelRasgadoHeroProps as BeachHeroProps };

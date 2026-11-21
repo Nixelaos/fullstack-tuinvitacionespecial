@@ -12,7 +12,7 @@ export interface PapelRasgadoDressCodeProps {
   peoniaSrc?: string;
 }
 
-export const PapelRasgadoDressCode: React.FC<PapelRasgadoDressCodeProps> = ({
+export function PapelRasgadoDressCode({
   className = '',
   title = 'Dress Code',
   reservedMessage = 'El color blanco se reserva para la novia',
@@ -20,7 +20,7 @@ export const PapelRasgadoDressCode: React.FC<PapelRasgadoDressCodeProps> = ({
   imageSrc = '/images/dress-code.png',
   imageAlt = 'Dress Code',
   peoniaSrc = '/images/peonia.png',
-}) => {
+}: PapelRasgadoDressCodeProps) {
   const [flowerVisible, setFlowerVisible] = useState(false);
   const flowerRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +107,7 @@ export const PapelRasgadoDressCode: React.FC<PapelRasgadoDressCodeProps> = ({
       </ScrollReveal>
     </div>
   );
-};
+}
 
 export const BeachDressCode = PapelRasgadoDressCode;
 export type { PapelRasgadoDressCodeProps as BeachDressCodeProps };

@@ -41,7 +41,7 @@ export interface PapelRasgadoFlowerProps {
  * Aparece con una suave transición de opacidad (0 a 100%) y crecimiento orgánico hasta su tamaño original en 2 segundos,
  * quedando totalmente estática y conservando su ángulo original sin movimiento flotante.
  */
-export const PapelRasgadoFlower: React.FC<PapelRasgadoFlowerProps> = ({
+export function PapelRasgadoFlower({
   className = '',
   variant = 'left',
   imageRotateClass = '',
@@ -49,7 +49,7 @@ export const PapelRasgadoFlower: React.FC<PapelRasgadoFlowerProps> = ({
   alt = 'Flor de hibisco',
   style,
   delayMs = 0,
-}) => {
+}: PapelRasgadoFlowerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -103,7 +103,7 @@ export const PapelRasgadoFlower: React.FC<PapelRasgadoFlowerProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export const BeachFlower = PapelRasgadoFlower;
 export type { PapelRasgadoFlowerProps as BeachFlowerProps };

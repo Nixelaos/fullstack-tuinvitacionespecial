@@ -3,19 +3,19 @@ import type { RsvpEventConfig } from '../types/rsvp';
 /**
  * Construye la URL para agregar el evento directamente a Google Calendar.
  */
-export const buildGoogleCalendarUrl = (config: RsvpEventConfig): string => {
+export function buildGoogleCalendarUrl(config: RsvpEventConfig): string {
   const { eventTitle, startDateIcs, endDateIcs, calendarDescription, location } = config;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
     eventTitle
   )}&dates=${startDateIcs}/${endDateIcs}&details=${encodeURIComponent(
     calendarDescription
   )}&location=${encodeURIComponent(location)}`;
-};
+}
 
 /**
  * Genera y descarga un archivo .ics compatible con Apple Calendar y Outlook.
  */
-export const downloadIcsFile = (config: RsvpEventConfig): void => {
+export function downloadIcsFile(config: RsvpEventConfig): void {
   const {
     eventTitle,
     uid,
@@ -53,4 +53,4 @@ export const downloadIcsFile = (config: RsvpEventConfig): void => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-};
+}

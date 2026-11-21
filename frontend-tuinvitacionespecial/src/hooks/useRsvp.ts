@@ -45,7 +45,7 @@ export interface UseRsvpOptions {
  * Compone `useInvitationParams`, `useRsvpForm`, calendario, WhatsApp, `BR-03`
  * (SSR-safe + verificación en vivo al enviar) y carga inicial vía `RsvpAdapter`.
  */
-export const useRsvp = ({
+export function useRsvp({
   eventConfig,
   menuOptions = DEFAULT_MENU_OPTIONS,
   defaultMenu = DEFAULT_MENU_VALUE,
@@ -54,7 +54,7 @@ export const useRsvp = ({
   defaultGuestName = 'Familia García',
   defaultMaxPasses = 2,
   maxDemoPasses = 50,
-}: UseRsvpOptions) => {
+}: UseRsvpOptions) {
   const urlGuest = useInvitationParams({
     defaultGuestName,
     defaultMaxPasses,
@@ -260,4 +260,4 @@ export const useRsvp = ({
     isDemoMode: adapter.mode === 'demo',
     ...form,
   };
-};
+}

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Plus, Minus, ArrowRight } from 'lucide-react';
 import { FAQ_ITEMS } from '../data/faqData';
 
-export const FaqAccordion: React.FC = () => {
+export function FaqAccordion() {
   const [openId, setOpenId] = useState<string | null>(FAQ_ITEMS[0].id);
 
-  const toggleItem = (id: string) => {
+  function toggleItem(id: string) {
     setOpenId((prev) => (prev === id ? null : id));
-  };
+  }
 
   return (
     <div className="max-w-3xl mx-auto divide-y divide-ivory-300 border-t border-b border-ivory-300">
@@ -59,4 +59,4 @@ export const FaqAccordion: React.FC = () => {
       })}
     </div>
   );
-};
+}

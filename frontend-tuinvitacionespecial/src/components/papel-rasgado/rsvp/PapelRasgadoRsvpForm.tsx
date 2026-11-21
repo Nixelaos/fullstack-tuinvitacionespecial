@@ -58,7 +58,7 @@ export interface PapelRasgadoRsvpFormProps {
 
 const ATTENDANCE_OPTIONS: AttendanceStatus[] = ['yes', 'no'];
 
-export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
+export function PapelRasgadoRsvpForm({
   subtitle = 'R. S. V. P.',
   salutationText,
   maxPasses,
@@ -84,7 +84,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
   onDecrementMenu,
   onUpdateTextField,
   onSubmit,
-}) => {
+}: PapelRasgadoRsvpFormProps) {
   const { attendance, attendeesCount, selectedMenus, allergies, song, dedication } =
     formValues;
 
@@ -94,10 +94,10 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
   const isSingleAttendee = attendeesCount === 1;
   const activeError = validationError || submitError;
 
-  const handleAttendanceKeyDown = (
+  function handleAttendanceKeyDown(
     e: React.KeyboardEvent<HTMLButtonElement>,
     currentIndex: number
-  ) => {
+  ) {
     if (isDeadlinePassed) return;
     let nextIndex: number | null = null;
 
@@ -118,12 +118,12 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
       onSetAttendance(ATTENDANCE_OPTIONS[nextIndex]);
       attendanceRefs.current[nextIndex]?.focus();
     }
-  };
+  }
 
-  const handleSingleMenuKeyDown = (
+  function handleSingleMenuKeyDown(
     e: React.KeyboardEvent<HTMLButtonElement>,
     currentIndex: number
-  ) => {
+  ) {
     if (isDeadlinePassed || menuOptions.length === 0) return;
     let nextIndex: number | null = null;
 
@@ -142,7 +142,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
       onSelectSingleMenu(menuOptions[nextIndex].value);
       singleMenuRefs.current[nextIndex]?.focus();
     }
-  };
+  }
 
   const selectedSingleMenuIndex = Math.max(
     0,
@@ -628,7 +628,7 @@ export const PapelRasgadoRsvpForm: React.FC<PapelRasgadoRsvpFormProps> = ({
       </div>
     </form>
   );
-};
+}
 
 export const BeachRsvpForm = PapelRasgadoRsvpForm;
 export type { PapelRasgadoRsvpFormProps as BeachRsvpFormProps };

@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { INVITATION_TEMPLATES } from '../data/catalogData';
 import { ParchmentLogo } from './ParchmentLogo';
 
-export const CatalogExplorer: React.FC = () => {
+export function CatalogExplorer() {
   return (
     <div className="flex justify-center">
       {/* Templates Container - Centrado */}
@@ -74,4 +74,4 @@ export const CatalogExplorer: React.FC = () => {
       </div>
     </div>
   );
-};
+}

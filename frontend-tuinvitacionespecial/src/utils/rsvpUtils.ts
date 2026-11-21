@@ -40,19 +40,21 @@ export interface BuildSubmissionPayloadParams {
 
 const CANONICAL_MENUS: TipoMenu[] = DEFAULT_MENU_OPTIONS.map((opt) => opt.value);
 
-export const resolveRsvpFeatures = (
+export function resolveRsvpFeatures(
   overrides?: Partial<RsvpFeatureFlags>
-): RsvpFeatureFlags => ({
-  ...DEFAULT_RSVP_FEATURES,
-  ...overrides,
-});
+): RsvpFeatureFlags {
+  return {
+    ...DEFAULT_RSVP_FEATURES,
+    ...overrides,
+  };
+}
 
 /**
  * Calcula la numeración correlativa de pasos visibles según los bloques habilitados.
  */
-export const buildRsvpStepNumbers = (
+export function buildRsvpStepNumbers(
   features: RsvpFeatureFlags
-): RsvpStepNumbers => {
+): RsvpStepNumbers {
   let step = 1;
   const attendance = step;
 
@@ -69,26 +71,26 @@ export const buildRsvpStepNumbers = (
     song,
     dedication,
   };
-};
+}
 
-export const createInitialMenus = (
+export function createInitialMenus(
   count: number,
   defaultMenu: TipoMenu = DEFAULT_MENU_VALUE
-): TipoMenu[] => {
+): TipoMenu[] {
   const safeCount = Math.max(0, Math.floor(count));
   return Array.from({ length: safeCount }, () => defaultMenu);
-};
+}
 
 /**
  * Ajusta el arreglo de menús al total de asistentes confirmados (BR-01).
  * Al reducir cupos, descarta primero platos por defecto para preservar
  * restricciones alimentarias explícitas (ej. Celíaco, Vegano).
  */
-export const resizeSelectedMenus = (
+export function resizeSelectedMenus(
   currentMenus: TipoMenu[],
   targetCount: number,
   defaultMenu: TipoMenu = DEFAULT_MENU_VALUE
-): TipoMenu[] => {
+): TipoMenu[] {
   const safeTarget = Math.max(0, Math.floor(targetCount));
   if (safeTarget === 0) return [];
 
@@ -111,11 +113,11 @@ export const resizeSelectedMenus = (
     }
   }
   return next;
-};
+}
 
-export const countMenusByType = (
+export function countMenusByType(
   selectedMenus: TipoMenu[]
-): MenuSelectionCounts => {
+): MenuSelectionCounts {
   const counts: MenuSelectionCounts = {
     Estándar: 0,
     Vegetariano: 0,
@@ -131,14 +133,14 @@ export const countMenusByType = (
   }
 
   return counts;
-};
+}
 
-export const canIncrementMenu = (
+export function canIncrementMenu(
   selectedMenus: TipoMenu[],
   menu: TipoMenu,
   targetCount: number,
   defaultMenu: TipoMenu = DEFAULT_MENU_VALUE
-): boolean => {
+): boolean {
   if (targetCount <= 0) return false;
   if (selectedMenus.length < targetCount) return true;
   if (
@@ -149,19 +151,19 @@ export const canIncrementMenu = (
     return true;
   }
   return false;
-};
+}
 
 /**
  * Agrega un plato respetando BR-01.
  * Si el cupo ya está completo con platos por defecto (`Estándar`),
  * reemplaza uno automáticamente para evitar fricción en móvil.
  */
-export const incrementMenuSelection = (
+export function incrementMenuSelection(
   selectedMenus: TipoMenu[],
   menu: TipoMenu,
   targetCount: number,
   defaultMenu: TipoMenu = DEFAULT_MENU_VALUE
-): TipoMenu[] => {
+): TipoMenu[] {
   if (targetCount <= 0) return [];
 
   if (selectedMenus.length < targetCount) {
@@ -178,38 +180,40 @@ export const incrementMenuSelection = (
   }
 
   return selectedMenus;
-};
+}
 
-export const decrementMenuSelection = (
+export function decrementMenuSelection(
   selectedMenus: TipoMenu[],
   menu: TipoMenu
-): TipoMenu[] => {
+): TipoMenu[] {
   const idx = selectedMenus.lastIndexOf(menu);
   if (idx === -1) return selectedMenus;
 
   const next = [...selectedMenus];
   next.splice(idx, 1);
   return next;
-};
+}
 
-export const selectSingleMenu = (menu: TipoMenu): TipoMenu[] => [menu];
+export function selectSingleMenu(menu: TipoMenu): TipoMenu[] {
+  return [menu];
+}
 
-export const isMenuSelectionValid = (
+export function isMenuSelectionValid(
   attendance: AttendanceStatus,
   attendeesCount: number,
   selectedMenus: TipoMenu[],
   showMenu: boolean
-): boolean => {
+): boolean {
   if (attendance === 'no') return true;
   if (attendeesCount < 1) return false;
   if (!showMenu) return true;
   return selectedMenus.length === attendeesCount;
-};
+}
 
 /**
  * Formatea los menús elegidos en un resumen legible (ej. "2× Estándar, 1× Celíaco").
  */
-export const formatMenuSummary = (selectedMenus: TipoMenu[]): string => {
+export function formatMenuSummary(selectedMenus: TipoMenu[]): string {
   if (selectedMenus.length === 0) return '';
   if (selectedMenus.length === 1) return selectedMenus[0];
 
@@ -217,19 +221,19 @@ export const formatMenuSummary = (selectedMenus: TipoMenu[]): string => {
   return CANONICAL_MENUS.filter((menu) => counts[menu] > 0)
     .map((menu) => `${counts[menu]}× ${menu}`)
     .join(', ');
-};
+}
 
 /**
  * Normaliza el estado del formulario al contrato esperado por el backend:
  * - Si no asiste: `cantAsistentes = 0`, `menusSeleccionados = []`, alergias y canción vacías.
  * - Si asiste con `showMenu = false`: rellena con `defaultMenu` para cumplir BR-01.
  */
-export const buildRsvpSubmissionPayload = ({
+export function buildRsvpSubmissionPayload({
   token,
   formValues,
   features,
   defaultMenu = DEFAULT_MENU_VALUE,
-}: BuildSubmissionPayloadParams): RsvpSubmissionPayload => {
+}: BuildSubmissionPayloadParams): RsvpSubmissionPayload {
   const resolvedFeatures = resolveRsvpFeatures(features);
   const dedication = resolvedFeatures.showDedication
     ? formValues.dedication.trim()
@@ -261,16 +265,16 @@ export const buildRsvpSubmissionPayload = ({
     cancionFavorita: resolvedFeatures.showSong ? formValues.song.trim() : '',
     mensajeNovios: dedication,
   };
-};
+}
 
 /**
  * Evalúa BR-03: determina si ya venció la fecha límite de confirmación.
  * Soporta ISO local (`YYYY-MM-DDTHH:mm:ss`) e ISO con zona horaria (`Z` / `±HH:MM`).
  */
-export const isRsvpDeadlinePassed = (
+export function isRsvpDeadlinePassed(
   deadlineIso?: string,
   now: Date = new Date()
-): boolean => {
+): boolean {
   if (!deadlineIso) return false;
 
   const trimmed = deadlineIso.trim();
@@ -299,11 +303,11 @@ export const isRsvpDeadlinePassed = (
 
   if (Number.isNaN(deadlineDate.getTime())) return false;
   return now.getTime() > deadlineDate.getTime();
-};
+}
 
-const decodeBase64DemoToken = (
+function decodeBase64DemoToken(
   tokenParam: string
-): DecodedDemoTokenPayload | null => {
+): DecodedDemoTokenPayload | null {
   try {
     if (typeof atob !== 'function') return null;
     const binary = atob(tokenParam);
@@ -328,17 +332,17 @@ const decodeBase64DemoToken = (
   } catch {
     return null;
   }
-};
+}
 
 /**
  * Parsea parámetros de invitación de la URL separando claramente:
  * - Modo demo (`?n=`, `?pases=`, o token Base64 JSON válido).
  * - Token opaco de producción (`?t=familia-perez-8x9k2m7p4q1z`), sin corromper `guestName`.
  */
-export const parseInvitationSearchParams = (
+export function parseInvitationSearchParams(
   search: string,
   options: ParseInvitationParamsOptions = {}
-): InvitationGuestData => {
+): InvitationGuestData {
   const {
     defaultGuestName = 'Familia García',
     defaultMaxPasses = 2,
@@ -406,4 +410,4 @@ export const parseInvitationSearchParams = (
     token: tokenParam,
     source,
   };
-};
+}

@@ -10,11 +10,11 @@ interface ParchmentLogoProps {
  * Logotipo oficial de Tu Invitación Especial:
  * Corazón editorial con anillos dorados entrelazados y ramas botánicas.
  */
-export const ParchmentLogo: React.FC<ParchmentLogoProps> = ({
+export function ParchmentLogo({
   className = 'w-6 h-6',
   size,
   alt = 'Tu Invitación Especial',
-}) => {
+}: ParchmentLogoProps) {
   return (
     <img
       src="/images/logo-anillos.png"
@@ -26,7 +26,7 @@ export const ParchmentLogo: React.FC<ParchmentLogoProps> = ({
       decoding="async"
     />
   );
-};
+}
 
 export const BrandLogo = ParchmentLogo;
 export default ParchmentLogo;

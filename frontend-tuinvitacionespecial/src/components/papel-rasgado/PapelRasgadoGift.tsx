@@ -20,7 +20,7 @@ export interface PapelRasgadoGiftProps {
   holderEmail?: string;
 }
 
-export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
+export function PapelRasgadoGift({
   className = '',
   title = 'Regalo para los Novios',
   message = 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle con nosotros, te dejamos nuestros datos bancarios:',
@@ -33,7 +33,7 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
   accountHolder = 'Valentina & Sebastián',
   holderRut = 'XX.XXX.XXX-X',
   holderEmail = 'regalos@valentinaysebastian.cl',
-}) => {
+}: PapelRasgadoGiftProps) {
   const [copied, setCopied] = useState(false);
   const {
     isOpen,
@@ -43,7 +43,7 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
     dialogRef,
   } = useModal();
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
     const textToCopy = `Banco: ${bankName}\nTipo de Cuenta: ${accountType}\nN° de Cuenta: ${accountNumber}\nTitular: ${accountHolder}\nRUT: ${holderRut}\nEmail: ${holderEmail}`;
 
@@ -67,7 +67,7 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
-  };
+  }
 
   return (
     <div
@@ -283,7 +283,7 @@ export const PapelRasgadoGift: React.FC<PapelRasgadoGiftProps> = ({
         : null}
     </div>
   );
-};
+}
 
 export const BeachGift = PapelRasgadoGift;
 export type { PapelRasgadoGiftProps as BeachGiftProps };

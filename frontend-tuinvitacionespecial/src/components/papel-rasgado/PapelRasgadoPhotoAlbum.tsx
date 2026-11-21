@@ -26,7 +26,7 @@ export interface PapelRasgadoPhotoAlbumProps {
   flowerVariant?: 'left' | 'right' | 'gentle';
 }
 
-export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
+export function PapelRasgadoPhotoAlbum({
   className = '',
   title = PAPEL_RASGADO_ALBUM_CONFIG.title,
   badgeText = PAPEL_RASGADO_ALBUM_CONFIG.badge,
@@ -37,7 +37,7 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
   imageAlt = PAPEL_RASGADO_ALBUM_CONFIG.imageAlt,
   showFlower = true,
   flowerVariant = 'right',
-}) => {
+}: PapelRasgadoPhotoAlbumProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const {
     isOpen: isModalOpen,
@@ -284,7 +284,7 @@ export const PapelRasgadoPhotoAlbum: React.FC<PapelRasgadoPhotoAlbumProps> = ({
         : null}
     </div>
   );
-};
+}
 
 export const PapelRasgadoPhotoQr = PapelRasgadoPhotoAlbum;
 export const BeachPhotoAlbum = PapelRasgadoPhotoAlbum;

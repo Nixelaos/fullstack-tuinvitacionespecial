@@ -21,7 +21,7 @@ interface GuestStepperProps {
  * Control numérico accesible (+ / -) para selección de cantidad de asistentes.
  * Reutilizable en distintas plantillas de invitación mediante clases personalizables.
  */
-export const GuestStepper: React.FC<GuestStepperProps> = ({
+export function GuestStepper({
   value,
   min = 1,
   max,
@@ -35,7 +35,7 @@ export const GuestStepper: React.FC<GuestStepperProps> = ({
   valueClassName = 'font-serif text-xl sm:text-2xl text-[#2F2420] font-bold leading-none',
   valueStyle = { fontFamily: "'Cormorant Garamond', Georgia, serif" },
   sublabelClassName = 'text-[10px] text-[#8C6947] font-medium uppercase tracking-wider',
-}) => {
+}: GuestStepperProps) {
   return (
     <div className={containerClassName}>
       <button
@@ -68,4 +68,4 @@ export const GuestStepper: React.FC<GuestStepperProps> = ({
       </button>
     </div>
   );
-};
+}

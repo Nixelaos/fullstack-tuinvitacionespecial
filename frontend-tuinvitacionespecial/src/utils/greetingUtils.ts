@@ -13,7 +13,7 @@ const FEMALE_NAMES_ENDING_IN_O = new Set([
 /**
  * Determina el saludo cordial y refinado según el nombre del destinatario y sus pases.
  */
-export const buildRsvpSalutation = (guestName: string, maxPasses: number): string => {
+export function buildRsvpSalutation(guestName: string, maxPasses: number): string {
   const lowerName = guestName.trim().toLowerCase();
   const firstWord = lowerName.split(/\s+/)[0] || '';
   const isFamily = lowerName.includes('familia');
@@ -46,4 +46,4 @@ export const buildRsvpSalutation = (guestName: string, maxPasses: number): strin
   return `${greetingLead} ${guestName}, queremos celebrar este momento tan especial junto a ${
     isMultiple ? 'ustedes' : 'ti'
   }`;
-};
+}

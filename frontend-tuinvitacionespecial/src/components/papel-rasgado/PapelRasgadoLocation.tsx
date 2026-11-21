@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollReveal } from './ScrollReveal';
 
-export const PapelRasgadoLocation: React.FC = () => {
+export function PapelRasgadoLocation() {
   const [flowerVisible, setFlowerVisible] = useState(false);
   const flowerRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +119,6 @@ export const PapelRasgadoLocation: React.FC = () => {
       </ScrollReveal>
     </div>
   );
-};
+}
 
 export const BeachLocation = PapelRasgadoLocation;

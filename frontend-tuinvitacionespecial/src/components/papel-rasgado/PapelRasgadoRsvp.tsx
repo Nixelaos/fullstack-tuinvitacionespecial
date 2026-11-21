@@ -40,7 +40,7 @@ export interface PapelRasgadoRsvpProps {
   defaultMaxPasses?: number;
 }
 
-export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
+export function PapelRasgadoRsvp({
   className = '',
   title = 'Confirmación de Asistencia',
   subtitle = 'R. S. V. P.',
@@ -57,7 +57,7 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
   adapter = demoRsvpAdapter,
   defaultGuestName,
   defaultMaxPasses,
-}) => {
+}: PapelRasgadoRsvpProps) {
   const {
     isOpen,
     mounted,
@@ -369,7 +369,7 @@ export const PapelRasgadoRsvp: React.FC<PapelRasgadoRsvpProps> = ({
         : null}
     </div>
   );
-};
+}
 
 export const BeachRsvp = PapelRasgadoRsvp;
 export type { PapelRasgadoRsvpProps as BeachRsvpProps };

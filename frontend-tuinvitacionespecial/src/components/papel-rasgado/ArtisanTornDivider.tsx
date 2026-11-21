@@ -24,14 +24,14 @@ interface ArtisanTornDividerProps {
  * - Franja de fibra de papel expuesta en tonos crema/marfil suaves de bajo contraste (#FCF8F2 a #F6EFE5)
  * - Doble sombra cálida y realista (profundidad 3D hacia la sección inferior)
  */
-export const ArtisanTornDivider: React.FC<ArtisanTornDividerProps> = ({
+export function ArtisanTornDivider({
   type = 'top',
   upperColor = '#FAF4EC',
   lowerColor = '#F5ECE0',
   fiberColor = '#FCF8F2',
   heightClassName = '',
   className = '',
-}) => {
+}: ArtisanTornDividerProps) {
   const reactId = React.useId().replace(/:/g, '');
   const tornShadowId = `artisanTornShadow-${type}-${reactId}`;
   const sheetEdgeShadowId = `artisanSheetEdgeShadow-${type}-${reactId}`;
@@ -134,4 +134,4 @@ export const ArtisanTornDivider: React.FC<ArtisanTornDividerProps> = ({
       </svg>
     </div>
   );
-};
+}

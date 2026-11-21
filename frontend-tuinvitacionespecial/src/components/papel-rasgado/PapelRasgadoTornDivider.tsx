@@ -17,13 +17,13 @@ interface PapelRasgadoTornDividerProps {
  * Separación artesanal con borde de papel rasgado y franja de fibra crema expuesta,
  * conectando de forma orgánica y uniforme las secciones de Galería y Ubicación.
  */
-export const PapelRasgadoTornDivider: React.FC<PapelRasgadoTornDividerProps> = ({
+export function PapelRasgadoTornDivider({
   upperColor = '#EBDDCE',
   lowerColor = '#FAF4EC',
   fiberColor = '#FCF8F2',
   heightClassName = '',
   className = '',
-}) => {
+}: PapelRasgadoTornDividerProps) {
   const reactId = React.useId().replace(/:/g, '');
   const tornShadowId = `papelRasgadoTornShadow-${reactId}`;
   const sheetEdgeShadowId = `papelRasgadoSheetEdgeShadow-${reactId}`;
@@ -75,7 +75,7 @@ export const PapelRasgadoTornDivider: React.FC<PapelRasgadoTornDividerProps> = (
       </svg>
     </div>
   );
-};
+}
 
 export const BeachTornDivider = PapelRasgadoTornDivider;
 export type { PapelRasgadoTornDividerProps as BeachTornDividerProps };

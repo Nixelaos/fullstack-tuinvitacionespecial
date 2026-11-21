@@ -27,7 +27,7 @@ export interface PapelRasgadoRsvpSuccessProps {
   onReset: () => void;
 }
 
-export const PapelRasgadoRsvpSuccess: React.FC<PapelRasgadoRsvpSuccessProps> = ({
+export function PapelRasgadoRsvpSuccess({
   guestName,
   formValues,
   eventConfig,
@@ -38,7 +38,7 @@ export const PapelRasgadoRsvpSuccess: React.FC<PapelRasgadoRsvpSuccessProps> = (
   whatsAppUrl,
   onDownloadIcs,
   onReset,
-}) => {
+}: PapelRasgadoRsvpSuccessProps) {
   const { attendance, attendeesCount, selectedMenus, allergies, song, dedication } =
     formValues;
 
@@ -231,7 +231,7 @@ export const PapelRasgadoRsvpSuccess: React.FC<PapelRasgadoRsvpSuccessProps> = (
       </div>
     </div>
   );
-};
+}
 
 export const BeachRsvpSuccess = PapelRasgadoRsvpSuccess;
 export type { PapelRasgadoRsvpSuccessProps as BeachRsvpSuccessProps };

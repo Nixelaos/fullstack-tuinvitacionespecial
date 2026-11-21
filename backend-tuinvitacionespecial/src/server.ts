@@ -5,13 +5,13 @@ import { redis } from './lib/redis.ts';
 
 const app = buildApp();
 
-const shutdown = async (signal: string) => {
+async function shutdown(signal: string) {
   app.log.info(`Recibida señal ${signal}, cerrando servidor...`);
   await app.close();
   await pool.end();
   await redis.quit().catch(() => undefined);
   process.exit(0);
-};
+}
 
 process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));

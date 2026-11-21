@@ -1,6 +1,6 @@
 # REVIEW.md — Reglas de revisión de código
 
-> Reglas ratificadas (`v1.0.0`, 2026-11-20) junto con [02-DOCS/wiki/sdd/constitution.md](./02-DOCS/wiki/sdd/constitution.md).
+> Reglas ratificadas (`v1.1.0`, 2026-11-20) junto con [02-DOCS/wiki/sdd/constitution.md](./02-DOCS/wiki/sdd/constitution.md).
 
 ## Formato del resumen
 
@@ -41,6 +41,10 @@ Todo reporte de revisión debe abrir con el conteo exacto antes de detallar hall
 - `backend-tuinvitacionespecial/drizzle/meta/**`
 - `backend-tuinvitacionespecial/Spec-Driven Development (SDD)/**` (fuente histórica de Notion)
 - `.rsc/**` y `.antigravity/rsc/**`
+
+## Convenciones de estilo (Nit)
+
+- **Funciones con `function` (Principio 11):** Declarar funciones con nombre, utilidades, custom hooks o componentes React mediante `const fn = () => {}` o `React.FC` en lugar de `function fn() {}` se reporta como `nit` (`const` se reserva para valores, esquemas, alias y retornos de hooks como `useCallback`/`useMemo`).
 
 ## Límite de nits
 

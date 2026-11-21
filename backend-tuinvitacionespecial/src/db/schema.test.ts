@@ -20,12 +20,12 @@ const ALL_TABLES = [
   rsvpMenus,
 ] as const;
 
-const findColumn = (table: (typeof ALL_TABLES)[number], columnName: string) => {
+function findColumn(table: (typeof ALL_TABLES)[number], columnName: string) {
   const { columns } = getTableConfig(table);
   const column = columns.find((col) => col.name === columnName);
   assert.ok(column, `Columna ${columnName} no encontrada en tabla ${getTableConfig(table).name}`);
   return column;
-};
+}
 
 test('ninguna tabla usa columnas text o integer sin cota superior', () => {
   for (const table of ALL_TABLES) {

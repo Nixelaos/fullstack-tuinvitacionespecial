@@ -4,14 +4,14 @@ import { FaWhatsapp } from 'react-icons/fa6';
 import { BRAND_NAME, WHATSAPP_NUMBER } from '../data/siteConfig';
 import { ParchmentLogo } from './ParchmentLogo';
 
-export const Navbar: React.FC = () => {
+export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => {
+    function onScroll() {
       setIsScrolled(window.scrollY > 24);
-    };
+    }
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -136,4 +136,4 @@ export const Navbar: React.FC = () => {
       )}
     </header>
   );
-};
+}

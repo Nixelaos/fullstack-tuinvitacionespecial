@@ -12,7 +12,7 @@ interface PapelRasgadoEnvelopeProps {
   stampDate?: string;
 }
 
-export const PapelRasgadoEnvelope: React.FC<PapelRasgadoEnvelopeProps> = ({
+export function PapelRasgadoEnvelope({
   isOpening,
   isFlapOpen = false,
   isPaperRising = false,
@@ -20,7 +20,7 @@ export const PapelRasgadoEnvelope: React.FC<PapelRasgadoEnvelopeProps> = ({
   isFadingOut = false,
   stampYear = PAPEL_RASGADO_DATE_FORMATS.stampYear,
   stampDate = PAPEL_RASGADO_DATE_FORMATS.stampDate,
-}) => {
+}: PapelRasgadoEnvelopeProps) {
   return (
     <div
       onClick={onOpen}
@@ -292,7 +292,7 @@ export const PapelRasgadoEnvelope: React.FC<PapelRasgadoEnvelopeProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export const BeachEnvelope = PapelRasgadoEnvelope;
 export type { PapelRasgadoEnvelopeProps as BeachEnvelopeProps };

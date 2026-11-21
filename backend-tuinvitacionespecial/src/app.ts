@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { db } from './db/index.ts';
 import { redis } from './lib/redis.ts';
 
-export const buildApp = () => {
+export function buildApp() {
   const app = Fastify({
     logger: true,
   }).withTypeProvider<ZodTypeProvider>();
@@ -67,4 +67,4 @@ export const buildApp = () => {
   );
 
   return app;
-};
+}

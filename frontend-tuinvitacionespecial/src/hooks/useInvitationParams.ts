@@ -12,9 +12,9 @@ export type UseInvitationParamsOptions = ParseInvitationParamsOptions;
  * Separa modo demo (`?n=`, `?pases=`, Base64 JSON) de tokens opacos del backend
  * (`?t=familia-perez-...`) sin sobrescribir el nombre con el token crudo.
  */
-export const useInvitationParams = (
+export function useInvitationParams(
   options: UseInvitationParamsOptions = {}
-): InvitationGuestData => {
+): InvitationGuestData {
   const {
     defaultGuestName = 'Familia García',
     defaultMaxPasses = 2,
@@ -42,4 +42,4 @@ export const useInvitationParams = (
   }, [defaultGuestName, defaultMaxPasses, maxDemoPasses]);
 
   return guestData;
-};
+}

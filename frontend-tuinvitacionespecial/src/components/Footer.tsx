@@ -5,7 +5,7 @@ import { BRAND_NAME, WHATSAPP_NUMBER } from '../data/siteConfig';
 import { INVITATION_TEMPLATES } from '../data/catalogData';
 import { ParchmentLogo } from './ParchmentLogo';
 
-export const Footer: React.FC = () => {
+export function Footer() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     `¡Hola ${BRAND_NAME}! Me gustaría recibir asesoría sobre sus invitaciones de boda digitales.`
   )}`;
@@ -146,4 +146,4 @@ export const Footer: React.FC = () => {
       </div>
     </footer>
   );
-};
+}

@@ -49,7 +49,7 @@ const ITINERARY_EVENTS: ItineraryItem[] = [
   },
 ];
 
-export const PapelRasgadoItinerary: React.FC = () => {
+export function PapelRasgadoItinerary() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(false);
 
@@ -188,6 +188,6 @@ export const PapelRasgadoItinerary: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export const BeachItinerary = PapelRasgadoItinerary;

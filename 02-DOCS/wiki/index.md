@@ -15,7 +15,7 @@ Mapa de documentación viva del proyecto bajo `02-DOCS/wiki/`.
 | Documento | Rol | Ruta |
 |---|---|---|
 | Configuración runtime ASDD | Calibración de stack, comandos y modo | [config.yaml](./sdd/config.yaml) |
-| Constitución del proyecto *(v1.0.0)* | Principios innegociables y Definition of Done | [constitution.md](./sdd/constitution.md) |
+| Constitución del proyecto *(v1.1.0)* | Principios innegociables y Definition of Done | [constitution.md](./sdd/constitution.md) |
 | Reglas de revisión *(v1.0.0)* | Bloqueantes, rutas Tier 2 y formato de review | [REVIEW.md](../../REVIEW.md) |
 | Log de decisiones SDD | Registro append-only de decisiones | [decisions.md](./sdd/decisions.md) |
 | Contratos HTTP y Seguridad *(decided)* | Catálogo de endpoints, códigos HTTP y arquitectura de seguridad | [notas-api-y-seguridad.md](./sdd/notas-api-y-seguridad.md) |

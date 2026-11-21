@@ -17,13 +17,13 @@ interface BuildWhatsAppUrlParams {
  * Construye el enlace de WhatsApp con el resumen formateado de la respuesta RSVP,
  * respetando los módulos activos (`features`) y omitiendo pases/menú si no asiste.
  */
-export const buildRsvpWhatsAppUrl = ({
+export function buildRsvpWhatsAppUrl({
   guestName,
   maxPasses,
   formValues,
   config,
   features,
-}: BuildWhatsAppUrlParams): string => {
+}: BuildWhatsAppUrlParams): string {
   const { attendance, attendeesCount, selectedMenus, allergies, song, dedication } =
     formValues;
   const resolvedFeatures = resolveRsvpFeatures(features);
@@ -55,4 +55,4 @@ export const buildRsvpWhatsAppUrl = ({
   }
 
   return `https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(text)}`;
-};
+}

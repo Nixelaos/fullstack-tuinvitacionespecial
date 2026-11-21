@@ -18,11 +18,11 @@ interface PapelRasgadoQuoteProps {
  * tanto en el borde superior como en el inferior, y sombra suave y realista.
  * Utiliza el componente PapelRasgadoFlower para el vaivén botánico.
  */
-export const PapelRasgadoQuote: React.FC<PapelRasgadoQuoteProps> = ({
+export function PapelRasgadoQuote({
   upperColor = '#F5ECE0',
   lowerColor = '#EBDDCE',
   className = '',
-}) => {
+}: PapelRasgadoQuoteProps) {
   return (
     <div className={`relative w-full overflow-hidden select-none -my-1 z-20 ${className}`}>
       {/* Fondo de continuidad natural: une Countdown (arriba) con Galería (abajo) */}
@@ -106,7 +106,7 @@ export const PapelRasgadoQuote: React.FC<PapelRasgadoQuoteProps> = ({
       </ScrollReveal>
     </div>
   );
-};
+}
 
 export const BeachQuote = PapelRasgadoQuote;
 export type { PapelRasgadoQuoteProps as BeachQuoteProps };

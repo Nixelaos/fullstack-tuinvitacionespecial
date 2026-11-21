@@ -97,3 +97,14 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
      - `dashboard-post-envio`: tarjetas devolviendo **personas/pases y familias** (cuadrando pases no usados en confirmaciones parciales) y exportación en **`.xlsx` nativo** de 2 hojas con neutralización de Formula Injection.
   4. **Deltas diferidos a migración `0002`:** `novios.max_accesos` default `2 → 3`, `familias_invitadas.email` nullable, columna separada de fecha de envío WhatsApp y columna opcional `novios.timezone` (`DEFAULT 'America/Santiago'`) se aplicarán al iniciar `plan`/`implement` sin alterar `0001_slim_doorman.sql`.
 - **Alternativas descartadas:** Envío masivo automático por WhatsApp Business Cloud API en v1 (Opción B, descartada por costo por mensaje, verificación Meta y pérdida de texto libre); exportación `.csv` con `;` (descartada por incompatibilidades en Excel Mac/inglés y notación científica en teléfonos); `email` obligatorio y `UNIQUE` por boda (descartada para soportar invitados solo-WhatsApp y correos compartidos por grupo familiar).
+
+---
+
+## 2026-11-21 — Convención de declaraciones `function` en todo el monorepo (Constitución v1.1.0)
+
+- **Contexto:** Tanto el backend como el frontend declaraban la mayoría de las funciones de módulo, helpers, utilidades, custom hooks y componentes React mediante `const fn = (...) => {}` (y `React.FC`), dificultando distinguir de un vistazo qué es una función y qué es un valor/constante.
+- **Decisión:**
+  1. Incorporar el **Principio 11** en `02-DOCS/wiki/sdd/constitution.md` (`v1.1.0`) exigiendo declaraciones explícitas con `function` (`export function ...`, `export async function ...`, `function ...`) para toda función con nombre, utilidad, helper, custom hook y componente React.
+  2. Incorporar la convención en `REVIEW.md` bajo **Convenciones de estilo (Nit)** para que `rsc-harness` la verifique automáticamente en futuras revisiones sin instalar herramientas adicionales como ESLint.
+  3. Refactorizar todo el monorepo (`backend-tuinvitacionespecial/` y `frontend-tuinvitacionespecial/`, incluyendo `Layout.astro`) para migrar las declaraciones de función a `function`.
+- **Qué se mantiene con `const`:** Valores, constantes de configuración (`DB_LIMITS`, `GOOGLE_JWKS_URL`, etc.), esquemas Zod, tablas Drizzle, instancias (`app`, `db`, `pool`, `redis`), alias de re-exportación (`BeachRsvp`, `BrandLogo`, etc.), retornos memorizados/estado de hooks (`useState`, `useRef`, `useMemo`, `useCallback`) y callbacks inline (`.map()`, `.filter()`, `useEffect`, `test()`, handlers inline en JSX).

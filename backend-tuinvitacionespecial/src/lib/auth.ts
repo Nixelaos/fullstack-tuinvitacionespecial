@@ -68,9 +68,9 @@ let jwksCache: JwksCache | null = null;
  * Compara la cabecera x-api-key contra MASTER_API_KEY en tiempo constante.
  * Compara digests SHA-256 para evitar fugas de longitud y RangeError en timingSafeEqual.
  */
-export const verifyMasterApiKey = (
+export function verifyMasterApiKey(
   apiKeyHeader: string | string[] | undefined
-): boolean => {
+): boolean {
   const expected = env.MASTER_API_KEY;
   if (!expected || typeof apiKeyHeader !== 'string' || apiKeyHeader.length === 0) {
     return false;
@@ -80,21 +80,21 @@ export const verifyMasterApiKey = (
   const expectedHash = createHash('sha256').update(expected, 'utf8').digest();
 
   return timingSafeEqual(providedHash, expectedHash);
-};
+}
 
 /**
  * Extrae el token Bearer del header Authorization (RFC 6750).
  */
-export const extractBearerToken = (
+export function extractBearerToken(
   authorizationHeader: string | string[] | undefined
-): string | null => {
+): string | null {
   if (typeof authorizationHeader !== 'string') return null;
 
   const match = authorizationHeader.match(/^Bearer\s+(\S+)$/i);
   return match ? match[1] : null;
-};
+}
 
-const parseCacheControlMaxAgeMs = (cacheControl: string | null): number => {
+function parseCacheControlMaxAgeMs(cacheControl: string | null): number {
   if (!cacheControl) return DEFAULT_JWKS_TTL_MS;
   const match = cacheControl.match(/max-age=(\d+)/i);
   if (!match) return DEFAULT_JWKS_TTL_MS;
@@ -103,14 +103,14 @@ const parseCacheControlMaxAgeMs = (cacheControl: string | null): number => {
   return Number.isFinite(seconds) && seconds > 0
     ? seconds * 1000
     : DEFAULT_JWKS_TTL_MS;
-};
+}
 
-const decodeBase64UrlJson = (segment: string): unknown => {
+function decodeBase64UrlJson(segment: string): unknown {
   const decoded = Buffer.from(segment, 'base64url').toString('utf8');
   return JSON.parse(decoded) as unknown;
-};
+}
 
-const fetchGooglePublicKeys = async (forceRefresh = false): Promise<Map<string, KeyObject>> => {
+async function fetchGooglePublicKeys(forceRefresh = false): Promise<Map<string, KeyObject>> {
   if (!forceRefresh && jwksCache && Date.now() < jwksCache.expiresAt) {
     return jwksCache.keysByKid;
   }
@@ -149,9 +149,9 @@ const fetchGooglePublicKeys = async (forceRefresh = false): Promise<Map<string, 
   };
 
   return keysByKid;
-};
+}
 
-const getGoogleKeyByKid = async (kid: string): Promise<KeyObject | null> => {
+async function getGoogleKeyByKid(kid: string): Promise<KeyObject | null> {
   const cachedKeys = await fetchGooglePublicKeys(false);
   const existing = cachedKeys.get(kid);
   if (existing) return existing;
@@ -159,22 +159,22 @@ const getGoogleKeyByKid = async (kid: string): Promise<KeyObject | null> => {
   // Reintenta una vez forzando recarga ante posible rotación de llaves de Google
   const refreshedKeys = await fetchGooglePublicKeys(true);
   return refreshedKeys.get(kid) ?? null;
-};
+}
 
 /**
  * Limpia la caché en memoria de llaves públicas de Google (útil para pruebas).
  */
-export const clearGoogleJwksCache = (): void => {
+export function clearGoogleJwksCache(): void {
   jwksCache = null;
-};
+}
 
 /**
  * Verifica criptográficamente un Google ID Token (RS256) con fetch + node:crypto nativos.
  * Valida firma, emisor, audiencia (GOOGLE_CLIENT_ID), expiración y correo verificado.
  */
-export const verifyGoogleIdToken = async (
+export async function verifyGoogleIdToken(
   idToken: string
-): Promise<GoogleAuthUser> => {
+): Promise<GoogleAuthUser> {
   if (!env.GOOGLE_CLIENT_ID) {
     throw new AuthError('GOOGLE_CLIENT_ID no está configurado en el servidor', 500);
   }
@@ -245,4 +245,4 @@ export const verifyGoogleIdToken = async (
     email: claims.email,
     name: claims.name ?? null,
   };
-};
+}

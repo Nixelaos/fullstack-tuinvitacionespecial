@@ -71,7 +71,9 @@ const SHORT_MONTHS_ES = [
   'DIC',
 ];
 
-const pad2 = (n: number): string => String(n).padStart(2, '0');
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
 
 /**
  * Genera todos los formatos y derivados de fecha a partir de una única fecha ISO.
@@ -80,11 +82,11 @@ const pad2 = (n: number): string => String(n).padStart(2, '0');
  * @param durationHours Duración estimada del evento en horas (por defecto 6)
  * @param rsvpDaysBefore Días de anticipación para la fecha límite de RSVP (por defecto 21)
  */
-export const generateEventDateFormats = (
+export function generateEventDateFormats(
   isoString: string,
   durationHours = 6,
   rsvpDaysBefore = 21
-): EventDateFormats => {
+): EventDateFormats {
   const [datePart, timePart = '00:00:00'] = isoString.split('T');
   const [year, month, day] = datePart.split('-').map(Number);
   const [hours, minutes] = timePart.split(':').map(Number);
@@ -135,14 +137,14 @@ export const generateEventDateFormats = (
     rsvpDeadlineShort,
     rsvpDeadlineIso,
   };
-};
+}
 
 /**
  * Formatea una fecha ISO (local o con zona horaria) a etiquetas de fecha límite en español.
  */
-export const formatRsvpDeadlineLabels = (
+export function formatRsvpDeadlineLabels(
   deadlineIso: string
-): { display: string; short: string } | null => {
+): { display: string; short: string } | null {
   const trimmed = deadlineIso.trim();
   if (!trimmed) return null;
 
@@ -173,4 +175,4 @@ export const formatRsvpDeadlineLabels = (
     display: `${day} de ${monthName} de ${parsed.getFullYear()}`,
     short: `${day} de ${monthName}`,
   };
-};
+}

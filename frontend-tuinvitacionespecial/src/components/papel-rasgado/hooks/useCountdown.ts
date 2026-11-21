@@ -18,7 +18,7 @@ export function useCountdown(targetDate: string | number): TimeLeft {
   useEffect(() => {
     const target = typeof targetDate === 'string' ? new Date(targetDate).getTime() : targetDate;
 
-    const calculateTime = () => {
+    function calculateTime() {
       const now = new Date().getTime();
       const difference = target - now;
 

@@ -12,23 +12,23 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
-const lockBodyScroll = () => {
+function lockBodyScroll() {
   if (typeof document === 'undefined') return;
   if (activeScrollLocks === 0) {
     savedBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
   }
   activeScrollLocks += 1;
-};
+}
 
-const unlockBodyScroll = () => {
+function unlockBodyScroll() {
   if (typeof document === 'undefined' || activeScrollLocks === 0) return;
   activeScrollLocks -= 1;
   if (activeScrollLocks === 0) {
     document.body.style.overflow = savedBodyOverflow ?? '';
     savedBodyOverflow = null;
   }
-};
+}
 
 export interface UseModalReturn {
   isOpen: boolean;
@@ -45,7 +45,7 @@ export interface UseModalReturn {
  * Gestiona estado SSR-safe (`mounted`), cierre con Escape, bloqueo seguro de scroll,
  * focus trap (`Tab` / `Shift+Tab`) y restauración de foco de teclado.
  */
-export const useModal = (initialOpen = false): UseModalReturn => {
+export function useModal(initialOpen = false): UseModalReturn {
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
 
@@ -56,14 +56,14 @@ export const useModal = (initialOpen = false): UseModalReturn => {
     setMounted(true);
   }, []);
 
-  const captureActiveElement = () => {
+  function captureActiveElement() {
     if (typeof document !== 'undefined') {
       previousFocusRef.current =
         document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null;
     }
-  };
+  }
 
   const open = useCallback(() => {
     captureActiveElement();
@@ -90,7 +90,7 @@ export const useModal = (initialOpen = false): UseModalReturn => {
   useEffect(() => {
     if (!isOpen || !mounted) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setIsOpen(false);
         return;
@@ -128,7 +128,7 @@ export const useModal = (initialOpen = false): UseModalReturn => {
         e.preventDefault();
         first.focus();
       }
-    };
+    }
 
     lockBodyScroll();
     window.addEventListener('keydown', handleKeyDown);
@@ -158,4 +158,4 @@ export const useModal = (initialOpen = false): UseModalReturn => {
     focusDialog,
     dialogRef,
   };
-};
+}

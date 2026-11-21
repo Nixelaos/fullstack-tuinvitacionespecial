@@ -6,11 +6,11 @@ interface ScrollRevealProps {
   threshold?: number;
 }
 
-export const ScrollReveal: React.FC<ScrollRevealProps> = ({
+export function ScrollReveal({
   children,
   className = '',
   threshold = 0.12,
-}) => {
+}: ScrollRevealProps) {
   const domRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -46,4 +46,4 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       {children}
     </div>
   );
-};
+}

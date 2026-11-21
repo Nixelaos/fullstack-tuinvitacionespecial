@@ -55,7 +55,7 @@ const googleFontsHref =
     <slot />
 
     <script>
-      const initDelicateScrollReveal = () => {
+      function initDelicateScrollReveal() {
         if (!("IntersectionObserver" in window)) {
           document.querySelectorAll(".scroll-reveal").forEach((el) => {
             el.classList.add("reveal-delicate");
@@ -78,13 +78,13 @@ const googleFontsHref =
           },
         );
 
-        const observePending = (root: ParentNode = document) => {
+        function observePending(root: ParentNode = document) {
           root
             .querySelectorAll(".scroll-reveal:not(.reveal-delicate)")
             .forEach((el) => {
               observer.observe(el);
             });
-        };
+        }
 
         observePending();
 
@@ -96,7 +96,7 @@ const googleFontsHref =
           childList: true,
           subtree: true,
         });
-      };
+      }
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", initDelicateScrollReveal);

@@ -13,12 +13,12 @@ interface TornPaperDividerProps {
   fiberColor?: string;
 }
 
-export const TornPaperDivider: React.FC<TornPaperDividerProps> = ({
+export function TornPaperDivider({
   type,
   upperColor,
   lowerColor,
   fiberColor = '#FFFFFF',
-}) => {
+}: TornPaperDividerProps) {
   if (type === 'top') {
     return (
       <div className="w-full overflow-hidden leading-none select-none pointer-events-none -my-1 relative z-30">
@@ -54,4 +54,4 @@ export const TornPaperDivider: React.FC<TornPaperDividerProps> = ({
       </svg>
     </div>
   );
-};
+}

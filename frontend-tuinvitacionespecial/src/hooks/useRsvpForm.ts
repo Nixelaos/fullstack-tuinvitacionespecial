@@ -39,7 +39,7 @@ export interface UseRsvpFormOptions {
  * Gestiona el estado, reglas de negocio (BR-01 y BR-03), normalización y envío del RSVP.
  * Agnóstico al diseño visual para ser reutilizado en cualquier plantilla de invitación.
  */
-export const useRsvpForm = ({
+export function useRsvpForm({
   maxPasses,
   token = null,
   defaultMenu = DEFAULT_MENU_VALUE,
@@ -47,7 +47,7 @@ export const useRsvpForm = ({
   isDeadlinePassed = false,
   checkDeadlinePassed,
   onSubmit,
-}: UseRsvpFormOptions) => {
+}: UseRsvpFormOptions) {
   const safeMaxPasses = Math.max(1, Math.floor(maxPasses));
   const resolvedFeatures = useMemo(
     () => resolveRsvpFeatures(features),
@@ -381,4 +381,4 @@ export const useRsvpForm = ({
     resetSubmission,
     hydrateResponse,
   };
-};
+}

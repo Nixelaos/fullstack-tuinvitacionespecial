@@ -2,16 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { GALLERY_PHOTOS } from './constants/tornPaperPaths';
 
-export const PapelRasgadoGallery: React.FC = () => {
+export function PapelRasgadoGallery() {
   const [activePhoto, setActivePhoto] = useState(0);
 
-  const handlePrevPhoto = () => {
+  function handlePrevPhoto() {
     setActivePhoto((prev) => (prev === 0 ? GALLERY_PHOTOS.length - 1 : prev - 1));
-  };
+  }
 
-  const handleNextPhoto = () => {
+  function handleNextPhoto() {
     setActivePhoto((prev) => (prev === GALLERY_PHOTOS.length - 1 ? 0 : prev + 1));
-  };
+  }
 
   // Gallery video reveal state for the first photo
   const galleryVideoRef = useRef<HTMLVideoElement>(null);
@@ -41,13 +41,13 @@ export const PapelRasgadoGallery: React.FC = () => {
   }, []);
 
   // Trigger smooth fade-out near end of gallery video
-  const handleGalleryVideoTimeUpdate = () => {
+  function handleGalleryVideoTimeUpdate() {
     const video = galleryVideoRef.current;
     if (!video || !video.duration) return;
     if (video.duration - video.currentTime <= 1.8) {
       setIsGalleryEffectEnded(true);
     }
-  };
+  }
 
   // Play gallery video when scrolled into view and photo 0 is active
   useEffect(() => {
@@ -170,6 +170,6 @@ export const PapelRasgadoGallery: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export const BeachGallery = PapelRasgadoGallery;

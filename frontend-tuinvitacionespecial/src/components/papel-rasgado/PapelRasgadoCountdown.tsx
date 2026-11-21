@@ -13,11 +13,11 @@ interface PapelRasgadoCountdownProps {
   displayTime?: string;
 }
 
-export const PapelRasgadoCountdown: React.FC<PapelRasgadoCountdownProps> = ({
+export function PapelRasgadoCountdown({
   timeLeft,
   displayDate = PAPEL_RASGADO_DATE_FORMATS.displayDateLong,
   displayTime = PAPEL_RASGADO_DATE_FORMATS.displayTime,
-}) => {
+}: PapelRasgadoCountdownProps) {
   return (
     <div className="relative z-40 w-full -mt-12 sm:-mt-14">
       {/* Flor botánica de contraste entre Hero y Countdown */}
@@ -142,7 +142,7 @@ export const PapelRasgadoCountdown: React.FC<PapelRasgadoCountdownProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export const BeachCountdown = PapelRasgadoCountdown;
 export type { PapelRasgadoCountdownProps as BeachCountdownProps };

@@ -19,7 +19,7 @@ import {
 } from './papel-rasgado';
 import { PAPEL_RASGADO_EVENT_DATE } from '../data/templates/papelRasgadoData';
 
-export const PapelRasgadoWeddingInvitation: React.FC = () => {
+export function PapelRasgadoWeddingInvitation() {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
   const [isFlapOpen, setIsFlapOpen] = useState(false);
@@ -30,10 +30,10 @@ export const PapelRasgadoWeddingInvitation: React.FC = () => {
   const timeLeft = useCountdown(PAPEL_RASGADO_EVENT_DATE);
   const timeoutsRef = React.useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const clearAllTimeouts = () => {
+  function clearAllTimeouts() {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
-  };
+  }
 
   React.useEffect(() => {
     return () => clearAllTimeouts();
@@ -45,7 +45,7 @@ export const PapelRasgadoWeddingInvitation: React.FC = () => {
   // 3. A los 950ms: el sobre termina de abrirse completamente -> el papel sube (950ms - 2150ms)
   // 4. Pausa para apreciar la tarjeta abierta (2150ms - 3700ms)
   // 5. Disolución suave y transición a la invitación completa (3700ms - 4400ms)
-  const handleOpenEnvelope = () => {
+  function handleOpenEnvelope() {
     if (isOpen || isOpening || isPaperRising) return;
     clearAllTimeouts();
     setIsOpening(true);
@@ -80,9 +80,9 @@ export const PapelRasgadoWeddingInvitation: React.FC = () => {
     }, 3000);
 
     timeoutsRef.current.push(t1, t2, t3, t4);
-  };
+  }
 
-  const handleReset = (e: React.MouseEvent) => {
+  function handleReset(e: React.MouseEvent) {
     e.stopPropagation();
     clearAllTimeouts();
     setIsOpening(false);
@@ -91,7 +91,7 @@ export const PapelRasgadoWeddingInvitation: React.FC = () => {
     setIsFadingOut(false);
     setIsOpen(false);
     setIsSprayed(false);
-  };
+  }
 
   return (
     // Outer Desktop/Tablet Backdrop with Side Bands
@@ -222,7 +222,7 @@ export const PapelRasgadoWeddingInvitation: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export const BeachWeddingInvitation = PapelRasgadoWeddingInvitation;
 export const PapelRasgadoInvitation = PapelRasgadoWeddingInvitation;

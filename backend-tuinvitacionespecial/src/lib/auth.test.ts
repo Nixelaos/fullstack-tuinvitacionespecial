@@ -25,11 +25,11 @@ const { publicKey: rotatedPublicKey, privateKey: rotatedPrivateKey } =
   generateKeyPairSync('rsa', { modulusLength: 2048 });
 const rotatedPublicJwk = rotatedPublicKey.export({ format: 'jwk' });
 
-const signJwt = (
+function signJwt(
   header: Record<string, unknown>,
   payload: Record<string, unknown>,
   signingKey = privateKey
-): string => {
+): string {
   const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signer = createSign('RSA-SHA256');
@@ -37,7 +37,7 @@ const signJwt = (
   signer.end();
   const signature = signer.sign(signingKey).toString('base64url');
   return `${encodedHeader}.${encodedPayload}.${signature}`;
-};
+}
 
 test('normalizedEmailSchema normaliza con trim + toLowerCase y valida formato', () => {
   const valid = normalizedEmailSchema.parse('  Planner.Wedding@Gmail.COM  ');

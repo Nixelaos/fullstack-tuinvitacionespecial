@@ -2,7 +2,7 @@
 import { FaWhatsapp } from 'react-icons/fa6';
 import { WHATSAPP_NUMBER, BRAND_NAME } from '../data/siteConfig';
 
-export const FloatingWhatsApp: React.FC = () => {
+export function FloatingWhatsApp() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     `¡Hola ${BRAND_NAME}! Estoy viendo su página web y me gustaría cotizar una invitación digital para mi boda.`
   )}`;
@@ -22,4 +22,4 @@ export const FloatingWhatsApp: React.FC = () => {
       <FaWhatsapp className="w-6 h-6 text-[#A7D7B8] group-hover:text-ivory-50 transition-colors" />
     </a>
   );
-};
+}
