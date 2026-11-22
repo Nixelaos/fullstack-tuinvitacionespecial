@@ -10,10 +10,12 @@ export const DB_LIMITS = {
   NOVIOS_NOMBRES_PAREJA_MAX: 100,
   NOVIOS_SLUG_PLANTILLA_MAX: 50,
   NOVIOS_MAX_ACCESOS_MIN: 1,
+  NOVIOS_MAX_ACCESOS_DEFAULT: 3,
   NOVIOS_MAX_ACCESOS_MAX: 10,
   NOVIOS_MAX_FAMILIAS_MIN: 1,
   NOVIOS_MAX_FAMILIAS_MAX: 1000,
   NOVIOS_PLANTILLA_MENSAJE_MAX: 1000,
+  NOVIOS_TIMEZONE_MAX: 64,
   FAMILIA_TOKEN_ENLACE_MAX: 80,
   FAMILIA_NOMBRE_MAX: 100,
   FAMILIA_TELEFONO_MAX: 20,
@@ -49,3 +51,22 @@ export const tipoMenuSchema = z.enum([
   'Celíaco',
   'Menú Infantil',
 ]);
+
+function isValidIanaTimezone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const ianaTimezoneSchema = z
+  .string()
+  .trim()
+  .min(1, 'La zona horaria IANA es obligatoria')
+  .max(
+    DB_LIMITS.NOVIOS_TIMEZONE_MAX,
+    `La zona horaria no puede superar ${DB_LIMITS.NOVIOS_TIMEZONE_MAX} caracteres`
+  )
+  .refine(isValidIanaTimezone, 'Zona horaria IANA inválida');

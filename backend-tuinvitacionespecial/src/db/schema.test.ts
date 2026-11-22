@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getTableConfig } from 'drizzle-orm/pg-core';
-import { DB_LIMITS, normalizedEmailSchema } from '../schemas/common.ts';
+import { DB_LIMITS, ianaTimezoneSchema, normalizedEmailSchema } from '../schemas/common.ts';
 import {
   accesosAutorizados,
   admins,
@@ -52,6 +52,7 @@ test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
     [novios, 'nombres_pareja', DB_LIMITS.NOVIOS_NOMBRES_PAREJA_MAX],
     [novios, 'slug_plantilla', DB_LIMITS.NOVIOS_SLUG_PLANTILLA_MAX],
     [novios, 'plantilla_mensaje', DB_LIMITS.NOVIOS_PLANTILLA_MENSAJE_MAX],
+    [novios, 'timezone', DB_LIMITS.NOVIOS_TIMEZONE_MAX],
     [accesosAutorizados, 'email_google', DB_LIMITS.EMAIL_MAX],
     [familiasInvitadas, 'token_enlace', DB_LIMITS.FAMILIA_TOKEN_ENLACE_MAX],
     [familiasInvitadas, 'familia_nombre', DB_LIMITS.FAMILIA_NOMBRE_MAX],
@@ -113,4 +114,57 @@ test('normalizedEmailSchema acepta hasta 160 caracteres y rechaza 161+', () => {
   const tooLongEmail = `${validLocal}x${domain}`;
   assert.equal(tooLongEmail.length, DB_LIMITS.EMAIL_MAX + 1);
   assert.throws(() => normalizedEmailSchema.parse(tooLongEmail));
+});
+
+test('migración 0002: defaults y nulabilidad en novios y familias_invitadas', () => {
+  assert.equal(DB_LIMITS.NOVIOS_MAX_ACCESOS_DEFAULT, 3);
+  assert.equal(DB_LIMITS.NOVIOS_TIMEZONE_MAX, 64);
+
+  const maxAccesos = findColumn(novios, 'max_accesos');
+  assert.equal(maxAccesos.columnType, 'PgSmallInt');
+  assert.equal(maxAccesos.notNull, true);
+  assert.equal(maxAccesos.default, DB_LIMITS.NOVIOS_MAX_ACCESOS_DEFAULT);
+
+  const timezone = findColumn(novios, 'timezone');
+  assert.equal(timezone.columnType, 'PgVarchar');
+  assert.equal(timezone.getSQLType(), 'varchar(64)');
+  assert.equal(timezone.notNull, true);
+  assert.equal(timezone.default, 'America/Santiago');
+
+  const email = findColumn(familiasInvitadas, 'email');
+  assert.equal(email.columnType, 'PgVarchar');
+  assert.equal(email.getSQLType(), 'varchar(160)');
+  assert.equal(email.notNull, false);
+  assert.equal(email.isUnique, false);
+  const familiasConfig = getTableConfig(familiasInvitadas);
+  assert.equal(
+    familiasConfig.uniqueConstraints.some((uc) => uc.columns.some((col) => col.name === 'email')),
+    false
+  );
+
+  const whatsappEnviadoAt = findColumn(familiasInvitadas, 'whatsapp_enviado_at');
+  assert.equal(whatsappEnviadoAt.columnType, 'PgTimestamp');
+  assert.equal(whatsappEnviadoAt.getSQLType(), 'timestamp with time zone');
+  assert.equal(whatsappEnviadoAt.notNull, false);
+
+  const invitacionEnviadaAt = findColumn(familiasInvitadas, 'invitacion_enviada_at');
+  assert.equal(invitacionEnviadaAt.columnType, 'PgTimestamp');
+  assert.equal(invitacionEnviadaAt.getSQLType(), 'timestamp with time zone');
+  assert.equal(invitacionEnviadaAt.notNull, false);
+});
+
+test('ianaTimezoneSchema acepta zonas IANA válidas y rechaza inválidas o largas', () => {
+  assert.equal(ianaTimezoneSchema.parse('America/Santiago'), 'America/Santiago');
+  assert.equal(ianaTimezoneSchema.parse('  UTC  '), 'UTC');
+  assert.equal(
+    ianaTimezoneSchema.parse('America/Argentina/Buenos_Aires'),
+    'America/Argentina/Buenos_Aires'
+  );
+  assert.equal(ianaTimezoneSchema.parse('Europe/Madrid'), 'Europe/Madrid');
+
+  assert.throws(() => ianaTimezoneSchema.parse(''));
+  assert.throws(() => ianaTimezoneSchema.parse('   '));
+  assert.throws(() => ianaTimezoneSchema.parse('Mars/Olympus'));
+  assert.throws(() => ianaTimezoneSchema.parse('Not/A_Timezone'));
+  assert.throws(() => ianaTimezoneSchema.parse('A'.repeat(DB_LIMITS.NOVIOS_TIMEZONE_MAX + 1)));
 });
