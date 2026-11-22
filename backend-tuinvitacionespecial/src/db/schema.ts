@@ -17,6 +17,8 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+
+//pgEnum: define un tipo de dato ENUM nativo en PostgreeSQL.
 export const tipoMenuEnum = pgEnum('tipo_menu_enum', [
   'Estándar',
   'Vegetariano',
@@ -24,6 +26,8 @@ export const tipoMenuEnum = pgEnum('tipo_menu_enum', [
   'Celíaco',
   'Menú Infantil',
 ]);
+
+//pgTable: Define una tabla en la DB.
 
 export const admins = pgTable('admins', {
   id: uuid('id')
@@ -49,7 +53,7 @@ export const novios = pgTable(
     fechaEvento: timestamp('fecha_evento', { withTimezone: true }),
     rsvpDeadline: timestamp('rsvp_deadline', { withTimezone: true }).notNull(),
     maxAccesos: smallint('max_accesos').notNull().default(3),
-    maxFamilias: smallint('max_familias').notNull().default(1000),
+    maxFamilias: smallint('max_familias').notNull().default(1000), //cantidad máxima de invitados
     plantillaMensaje: varchar('plantilla_mensaje', { length: 1000 }),
     timezone: varchar('timezone', { length: 64 }).notNull().default('America/Santiago'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
