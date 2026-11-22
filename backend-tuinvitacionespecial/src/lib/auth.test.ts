@@ -39,12 +39,18 @@ function signJwt(
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
+
+
 test('normalizedEmailSchema normaliza con trim + toLowerCase y valida formato', () => {
   const valid = normalizedEmailSchema.parse('  Planner.Wedding@Gmail.COM  ');
   assert.equal(valid, 'planner.wedding@gmail.com');
 
   assert.throws(() => normalizedEmailSchema.parse('correo-invalido'));
 });
+
+/**
+ * verifyMasterApiKey (Líneas 49–55): Verifica que devuelva true con la clave exacta y false con clave distinta, más corta, vacía o undefined.
+ */
 
 test('verifyMasterApiKey valida en tiempo constante y rechaza llaves inválidas', () => {
   assert.equal(verifyMasterApiKey('super-secret-master-key-for-tests'), true);
@@ -54,6 +60,11 @@ test('verifyMasterApiKey valida en tiempo constante y rechaza llaves inválidas'
   assert.equal(verifyMasterApiKey(undefined), false);
 });
 
+/**
+ * Verifica que extraiga el token con 'Bearer ' o 'bearer ' y devuelva null con 'Basic abc' o undefined.
+ * 
+ */
+
 test('extractBearerToken extrae tokens Bearer correctamente', () => {
   assert.equal(extractBearerToken('Bearer tok_123.456'), 'tok_123.456');
   assert.equal(extractBearerToken('bearer tok_123.456'), 'tok_123.456');
@@ -61,6 +72,11 @@ test('extractBearerToken extrae tokens Bearer correctamente', () => {
   assert.equal(extractBearerToken(undefined), null);
 });
 
+
+/**
+ * 7 casos de tests.
+ * 
+ */
 test('verifyGoogleIdToken verifica firma RS256, normaliza email y rechaza claims inválidos', async (t) => {
   clearGoogleJwksCache();
 
