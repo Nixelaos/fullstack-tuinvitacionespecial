@@ -3,7 +3,7 @@ import { buildApp } from './app.ts';
 import { pool } from './db/index.ts';
 import { redis } from './lib/redis.ts';
 
-const app = buildApp();
+const app = await buildApp();
 
 async function shutdown(signal: string) {
   app.log.info(`Recibida señal ${signal}, cerrando servidor...`);

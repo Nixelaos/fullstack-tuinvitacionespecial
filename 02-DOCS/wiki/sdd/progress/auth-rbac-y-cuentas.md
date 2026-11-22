@@ -29,7 +29,7 @@ Regla de trabajo por micro-corte:
 ## Micro-cortes (`C1`–`C9` + Cierre `T023`)
 
 - [x] **C1 (`T001`–`T002` — Tier 2):** Migración BD `0002`, `schema.ts`, `DB_LIMITS`, `MD-PostgreeSQL.sql` y `schema.test.ts` *(~40 líneas de lógica real)*.
-- [ ] **C2 (`T003`–`T005` — Tier 2):** Plugins Fastify en `package.json`, `env.ts`, `.env.example`, `src/lib/errors.ts` y `src/middleware/csrf.ts` *(~130 líneas de lógica real)*.
+- [x] **C2 (`T003`–`T005` — Tier 2):** Plugins Fastify en `package.json`, `env.ts`, `.env.example`, `src/lib/errors.ts` y `src/middleware/csrf.ts` *(~130 líneas de lógica real)*.
 - [ ] **C3 (`T006`–`T007` — Tier 1):** Cableado perimetral en `src/app.ts` (`helmet`, `cors`, `cookie`, `rate-limit`, `bodyLimit`, redacción logs, DI) *(~100 líneas de lógica real)*.
 - [ ] **C4 (`T008`–`T009` — Tier 2):** Motor de sesiones stateful Redis `src/lib/session.ts` (`session:<sid>`, `user_sessions:<email>`, TTL `604 800` s, cookies) *(~110 líneas de lógica real)*.
 - [ ] **C5 (`T010`–`T011` — Tier 2):** Servicio `src/services/authAccess.ts` y middlewares `requireAuth` / `requireWeddingAccess` (`BR-06`) en `src/middleware/auth.ts` *(~100 líneas de lógica real)*.
