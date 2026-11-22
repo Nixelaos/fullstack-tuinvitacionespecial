@@ -27,31 +27,34 @@ export class AuthError extends Error {
 }
 
 // Valida el header del JWT de Google (algoritmo RS256 e ID de clave pública).
+// Un token JWT tiene 3 partes separadas por puntos: HEADER.PAYLOAD.SIGNATURE. Esta constante valida la primera parte (Header) del token de Google:
 const jwtHeaderSchema = z.object({
   alg: z.literal('RS256'),
-  kid: z.string().min(1),
+  kid: z.string().min(1), //Key ID
 });
 
 // Valida los claims del payload del ID Token emitido por Google.
+// Valida la segunda parte (Payload / Claims) del token JWT, donde vienen los datos del usuario que inició sesión con Google:
 const googleClaimsSchema = z.object({
-  iss: z.string().min(1),
-  aud: z.string().min(1),
-  sub: z.string().min(1),
-  email: normalizedEmailSchema,
-  email_verified: z.literal(true),
-  exp: z.number().finite(),
-  name: z.string().trim().min(1).optional(),
+  iss: z.string().min(1),                       //(Issuer / Emisor)
+  aud: z.string().min(1),                       //Audience
+  sub: z.string().min(1),                       //Subject
+  email: normalizedEmailSchema,                 //Valida que sea un email valido y además lo tarnsforma.
+  email_verified: z.literal(true),              //Confirma con google si el usuario es dueño real
+  exp: z.number().finite(),                     //Expiration Time, fecha de vencimiento del token
+  name: z.string().trim().min(1).optional(),    //Nombre visible del usuario.
 });
 
 // Valida la respuesta JSON del endpoint JWKS de Google con sus claves públicas RSA.
+// Para verificar la firma del token, tu servidor descarga las llaves públicas de Google.
 const jwksResponseSchema = z.object({
   keys: z.array(
     z.object({
       kid: z.string().min(1),
-      kty: z.literal('RSA'),
-      n: z.string().min(1),
-      e: z.string().min(1),
-      alg: z.string().optional(),
+      kty: z.literal('RSA'),        //Key Type.
+      n: z.string().min(1),         //Modulus
+      e: z.string().min(1),         //Exponent: Son ambos números codificados en base64
+      alg: z.string().optional(),   //Metadatos junto a 'use'
       use: z.string().optional(),
     })
   ),
@@ -61,6 +64,9 @@ interface JwksCache {
   keysByKid: Map<string, KeyObject>;
   expiresAt: number;
 }
+
+
+//Esta variable puede guardar o bien un objeto JwksCAche o bien 'null'
 
 let jwksCache: JwksCache | null = null;
 
@@ -76,6 +82,7 @@ export function verifyMasterApiKey(
     return false;
   }
 
+  //1° 'createHash': Crea un objeto calculador de hash configurado en SHA-256. 2° update: Mete los datos en la máquina e uft8 (comparado con hacerlo paso a paso si fueran 10gb). 3° digest(), cierra la máquina y saca resultado final y lo entrega
   const providedHash = createHash('sha256').update(apiKeyHeader, 'utf8').digest();
   const expectedHash = createHash('sha256').update(expected, 'utf8').digest();
 
@@ -83,17 +90,23 @@ export function verifyMasterApiKey(
 }
 
 /**
- * Extrae el token Bearer del header Authorization (RFC 6750).
+ * Extrae el token Bearer del header Authorization (RFC 6750). 
+ * Cuando un usuario inicia sesión con Google en tu frontend, el navegador envía el token dentro de una cabecera HTTP estándar llamada Authorization, que por norma (RFC 6750) lleva la palabra "Bearer "
  */
 export function extractBearerToken(
   authorizationHeader: string | string[] | undefined
 ): string | null {
   if (typeof authorizationHeader !== 'string') return null;
 
+  //Extrae la palabra 'bearer' del header token
   const match = authorizationHeader.match(/^Bearer\s+(\S+)$/i);
   return match ? match[1] : null;
 }
 
+
+/**
+ * Calcula cuántos milisegundos podemos guardar en memoria caché las llaves públicas de Google antes de tener que volver a descargarlas. Cuando las descargamos de google, dentro de estás google envía un max-age=2600 (ejemplo) y así sabemos cuánto es el máximo.
+ */
 function parseCacheControlMaxAgeMs(cacheControl: string | null): number {
   if (!cacheControl) return DEFAULT_JWKS_TTL_MS;
   const match = cacheControl.match(/max-age=(\d+)/i);
@@ -105,11 +118,23 @@ function parseCacheControlMaxAgeMs(cacheControl: string | null): number {
     : DEFAULT_JWKS_TTL_MS;
 }
 
+/**¿Por qué devuelve : unknown (y tiene as unknown)?
+Por defecto en TypeScript, JSON.parse() devuelve el tipo any (que desactiva las revisiones de seguridad de TypeScript).
+ * 
+Esta función en auth.ts traduce una parte de un token JWT desde su formato codificado (Base64URL) hasta un objeto de JavaScript legible.
+ */
+
 function decodeBase64UrlJson(segment: string): unknown {
   const decoded = Buffer.from(segment, 'base64url').toString('utf8');
   return JSON.parse(decoded) as unknown;
 }
 
+/** Promise: Te prometo que cuando termine de descargar te entragaré lo que está dentro de <>.
+ * 
+ * Es la encargada de obtener las llaves públicas de Google (para poder comprobar si un token de inicio de sesión fue firmado realmente por Google) y guardarlas en memoria caché para que tu servidor sea rápido.
+ * 
+ * Devuelve el Map: Podría ser key-1 y IDs largos como '7170565d93f7510f0d8fe7...'
+ */
 async function fetchGooglePublicKeys(forceRefresh = false): Promise<Map<string, KeyObject>> {
   if (!forceRefresh && jwksCache && Date.now() < jwksCache.expiresAt) {
     return jwksCache.keysByKid;
@@ -151,6 +176,10 @@ async function fetchGooglePublicKeys(forceRefresh = false): Promise<Map<string, 
   return keysByKid;
 }
 
+/**
+ * Busca una llave pública específica de Google por su ID (kid), manejando de forma inteligente el caso en que Google haya cambiado (rotado) sus llaves.
+ */
+
 async function getGoogleKeyByKid(kid: string): Promise<KeyObject | null> {
   const cachedKeys = await fetchGooglePublicKeys(false);
   const existing = cachedKeys.get(kid);
@@ -169,8 +198,20 @@ export function clearGoogleJwksCache(): void {
 }
 
 /**
- * Verifica criptográficamente un Google ID Token (RS256) con fetch + node:crypto nativos.
- * Valida firma, emisor, audiencia (GOOGLE_CLIENT_ID), expiración y correo verificado.
+ * Es el "director de orquesta": junta todas las funciones y constantes anteriores para verificar un token de Google de punta a punta y devolverte los datos del usuario si todo es legítimo. Sigue un checklist de seguridad de 8 pasos en orden:
+ * 
+ * Paso 1: Verificar que tu servidor esté configurado (
+ * Paso 2: Partir el token en sus 3 pedazos (
+ * Paso 3: Decodificar header y payload (
+ * Paso 4: Validar la cabecera y buscar la llave pública de Google (
+ * Paso 5: Verificar la firma criptográfica (
+ * Paso 6: Validar el formato de los datos del usuario con Zod (
+ * Paso 7: Validar Emisor (iss), Audiencia (aud) y Expiración (exaud).
+ * Paso 8: Devolver el usuario limpio (
+ * 
+ * 
+ * Si superó los 7 filtros anteriores, el token es 100% auténtico y vigente. Devuelve un objeto GoogleAuthUser con el ID de Google (sub), el email normalizado y el name (o null si no venía).
+ * 
  */
 export async function verifyGoogleIdToken(
   idToken: string
