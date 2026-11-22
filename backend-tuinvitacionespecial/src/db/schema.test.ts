@@ -27,23 +27,27 @@ function findColumn(table: (typeof ALL_TABLES)[number], columnName: string) {
   return column;
 }
 
+//1. Recorre todas las tablas del proyecto y verifica que ninguna use PgText (texto sin límite que se preste a ataques de denegación de servicio por memoria) ni PgInteger (cuando smallint es suficiente).
 test('ninguna tabla usa columnas text o integer sin cota superior', () => {
   for (const table of ALL_TABLES) {
     const config = getTableConfig(table);
     for (const column of config.columns) {
       assert.notEqual(
         column.columnType,
-        'PgText',
+        'PgText', //pgText es un texto sin límite que se preste a ataquesoS (Denial of Service) por sobrecarga de memoria.
         `${config.name}.${column.name} no debe usar TEXT sin límite`
       );
       assert.notEqual(
         column.columnType,
-        'PgInteger',
+        'P //PgInteger es un entero sin límite que se preste a ataques de DoS por sobrecarga de memoria.gInteger', //pgInteger es un INTEGER de 4 bytes de números enteros de hasta 2.147.483.647.
         `${config.name}.${column.name} no debe usar INTEGER sin cota`
       );
     }
   }
 });
+
+//2. Revisa 15 columnas varchar y 5 columnas smallint para confirmar que sus longitudes en la base de datos sean idénticas a las constantes de common.ts
+//Por qué existe: Evita desincronizaciones entre lo que valida el backend (Zod) y lo que permite la base de datos (Postgres).
 
 test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
   const expectedVarchars: Array<readonly [(typeof ALL_TABLES)[number], string, number]> = [
@@ -89,6 +93,8 @@ test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
   assert.equal(maxFamilias.notNull, true);
 });
 
+
+//3. omprueba que en la definición de las tablas estén registradas las 7 reglas de RSVP.
 test('existen todos los CHECK constraints de rangos y consistencia R.S.V.P.', () => {
   const noviosChecks = getTableConfig(novios).checks.map((c) => c.name);
   assert.ok(noviosChecks.includes('chk_novios_max_accesos'));
@@ -104,6 +110,8 @@ test('existen todos los CHECK constraints de rangos y consistencia R.S.V.P.', ()
   assert.ok(rsvpChecks.includes('chk_respuestas_asistencia_consistente'));
 });
 
+
+//4. Construye un correo de prueba de exactamente 160 caracteres y comprueba que pase, y luego uno de 161 caracteres y comprueba que Zod lance un error (assert.throws).
 test('normalizedEmailSchema acepta hasta 160 caracteres y rechaza 161+', () => {
   const domain = '@example.com';
   const validLocal = 'a'.repeat(DB_LIMITS.EMAIL_MAX - domain.length);
@@ -123,6 +131,9 @@ test('normalizedEmailSchema acepta hasta 160 caracteres y rechaza 161+', () => {
 DB_LIMITS: NOVIOS_MAX_ACCESOS_DEFAULT sea 3 y NOVIOS_TIMEZONE_MAX sea 64.
  * 
  */
+
+//5. 
+//Validar los cambios de la migración 0002 y zonas horarias
 test('migración 0002: defaults y nulabilidad en novios y familias_invitadas', () => {
   assert.equal(DB_LIMITS.NOVIOS_MAX_ACCESOS_DEFAULT, 3);
   assert.equal(DB_LIMITS.NOVIOS_TIMEZONE_MAX, 64);
@@ -165,6 +176,8 @@ test('migración 0002: defaults y nulabilidad en novios y familias_invitadas', (
  * 
  * Prueba el esquema Zod ianaTimezoneSchema (en common.ts):
  */
+
+//6. Este test verifica que el validador de Zod (ianaTimezoneSchema) controle estrictamente qué zona horaria se puede guardar en novios.timezone.
 test('ianaTimezoneSchema acepta zonas IANA válidas y rechaza inválidas o largas', () => {
   assert.equal(ianaTimezoneSchema.parse('America/Santiago'), 'America/Santiago');
   assert.equal(ianaTimezoneSchema.parse('  UTC  '), 'UTC');
