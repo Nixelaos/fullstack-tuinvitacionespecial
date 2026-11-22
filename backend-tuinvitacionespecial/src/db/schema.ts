@@ -1,3 +1,8 @@
+/**
+ * El archivo schema.ts define toda la base de datos PostgreSQL en Drizzle ORM para una plataforma de invitaciones de boda. Usa uuidv7() en todas las llaves primarias (UUIDs ordenables por tiempo) y aplica restricciones (check, unique, index) directamente en la base de datos
+ * 
+ */
+
 import { sql } from 'drizzle-orm';
 import {
   boolean,
