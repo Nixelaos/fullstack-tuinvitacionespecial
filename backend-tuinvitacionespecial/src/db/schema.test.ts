@@ -116,6 +116,13 @@ test('normalizedEmailSchema acepta hasta 160 caracteres y rechaza 161+', () => {
   assert.throws(() => normalizedEmailSchema.parse(tooLongEmail));
 });
 
+
+/**
+ * Inspecciona en memoria las tablas novios y familiasInvitadas de schema.ts y DB_LIMITS de common.ts para asegurar que:
+
+DB_LIMITS: NOVIOS_MAX_ACCESOS_DEFAULT sea 3 y NOVIOS_TIMEZONE_MAX sea 64.
+ * 
+ */
 test('migración 0002: defaults y nulabilidad en novios y familias_invitadas', () => {
   assert.equal(DB_LIMITS.NOVIOS_MAX_ACCESOS_DEFAULT, 3);
   assert.equal(DB_LIMITS.NOVIOS_TIMEZONE_MAX, 64);
@@ -153,6 +160,11 @@ test('migración 0002: defaults y nulabilidad en novios y familias_invitadas', (
   assert.equal(invitacionEnviadaAt.notNull, false);
 });
 
+
+/**
+ * 
+ * Prueba el esquema Zod ianaTimezoneSchema (en common.ts):
+ */
 test('ianaTimezoneSchema acepta zonas IANA válidas y rechaza inválidas o largas', () => {
   assert.equal(ianaTimezoneSchema.parse('America/Santiago'), 'America/Santiago');
   assert.equal(ianaTimezoneSchema.parse('  UTC  '), 'UTC');
