@@ -108,3 +108,16 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
   2. Incorporar la convención en `REVIEW.md` bajo **Convenciones de estilo (Nit)** para que `rsc-harness` la verifique automáticamente en futuras revisiones sin instalar herramientas adicionales como ESLint.
   3. Refactorizar todo el monorepo (`backend-tuinvitacionespecial/` y `frontend-tuinvitacionespecial/`, incluyendo `Layout.astro`) para migrar las declaraciones de función a `function`.
 - **Qué se mantiene con `const`:** Valores, constantes de configuración (`DB_LIMITS`, `GOOGLE_JWKS_URL`, etc.), esquemas Zod, tablas Drizzle, instancias (`app`, `db`, `pool`, `redis`), alias de re-exportación (`BeachRsvp`, `BrandLogo`, etc.), retornos memorizados/estado de hooks (`useState`, `useRef`, `useMemo`, `useCallback`) y callbacks inline (`.map()`, `.filter()`, `useEffect`, `test()`, handlers inline en JSX).
+
+---
+
+## 2026-11-22 — Concreciones operativas de implementación para `auth-rbac-y-cuentas` (`F-06`)
+
+- **Contexto:** El análisis de consistencia (`02-DOCS/wiki/sdd/analysis/auth-rbac-y-cuentas.md`, hallazgo `F-06`) solicitó registrar formalmente en este log las 3 concreciones operativas definidas en `plans/auth-rbac-y-cuentas.md` (§0, §2 #2 y §7 D3) antes de avanzar con los middlewares y rutas de autenticación.
+- **Decisión:**
+  1. **Resolución determinista de `novios.admin_id NOT NULL` bajo `MASTER_API_KEY`:**
+     - Con sesión de admin por cookie, `novios.admin_id` toma el `adminId` autenticado (`403 ADMIN_OWNER_MISMATCH` si el body envía otro distinto).
+     - Con `MASTER_API_KEY`, se resuelve en este orden: (1) `body.adminId` verificado activo en `admins` (`404 ADMIN_NOT_FOUND` si no existe o está inactivo); (2) admin activo con `email_google = env.DEFAULT_ADMIN_EMAIL` si está configurado; (3) autoselección únicamente cuando existe exactamente `1` admin con `activo = true`; (4) `400 ADMIN_OWNER_REQUIRED` si hay `0` o `>= 2` admins activos sin resolver. En operaciones por `MASTER_API_KEY`, `accesos_autorizados.autorizado_por_admin_id` queda en `NULL`.
+  2. **Umbrales de `@fastify/rate-limit` sobre Redis 8.0:** `POST /api/auth/google` en `10` req/min/IP; `GET /api/auth/me`, `POST /api/auth/logout` y `/api/admin/*` en `60` req/min/IP; resto de rutas (excluyendo `/health`) en `120` req/min/IP; exceder el límite responde `429 RATE_LIMIT_EXCEEDED`.
+  3. **Chequeo `BR-04` al reactivar acceso (`activo: false -> true`):** La mutación `PATCH /api/admin/weddings/:noviosId/accesses/:accessId` abre transacción con `SELECT ... FOR UPDATE` sobre `novios` y valida el cupo `activo = true < max_accesos` antes de reactivar, devolviendo `409 MAX_ACCESSES_REACHED` si el cupo está completo.
+- **Alternativas descartadas:** Crear un usuario administrador ficticio para `MASTER_API_KEY` (descartada para preservar auditoría explícita con `NULL` en `autorizado_por_admin_id`) o aplicar un único umbral global de rate limit sin diferenciar login ni rutas administrativas.
