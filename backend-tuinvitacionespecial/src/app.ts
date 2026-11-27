@@ -27,6 +27,8 @@ export const LOGGER_REDACT_PATHS = [
   'req.headers.authorization',
 ] as const;
 
+//Interfaz que 
+// Fase 1: Contratos mínimos para inyectar dependencias (producción o mocks de test)
 export interface HealthDb {
   execute: (query: ReturnType<typeof sql>) => Promise<unknown>;
 }
@@ -92,6 +94,7 @@ function resolveLoggerOptions(
 }
 
 export async function buildApp(deps: AppDependencies = {}) {
+  // Fase 2: Seleccionar las dependencias inyectadas o usar las conexiones reales por defecto
   const activeDb = deps.db ?? defaultDb;
   const activeRedis = deps.redis ?? defaultRedis;
   const activeRateLimitRedis =
@@ -171,6 +174,7 @@ export async function buildApp(deps: AppDependencies = {}) {
       let postgresStatus: 'connected' | 'disconnected' = 'disconnected';
       let redisStatus: 'connected' | 'disconnected' = 'disconnected';
 
+      // Fase 3: Ejecutar las comprobaciones reales contra PostgreSQL y Redis al recibir GET /health
       try {
         await activeDb.execute(sql`SELECT 1`);
         postgresStatus = 'connected';
