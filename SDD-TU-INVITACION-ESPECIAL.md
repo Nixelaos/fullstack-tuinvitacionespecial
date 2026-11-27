@@ -1,12 +1,14 @@
 # Tú Invitación Especial Spec-Driven Development
 
+> **Actualizado al estado real del proyecto (2026-11-27):** Sincronizado con `backend-tuinvitacionespecial/src/db/schema.ts`, `frontend-tuinvitacionespecial/`, `02-DOCS/wiki/sdd/constitution.md` (`v1.1.0`), `decisions.md` y `notas-api-y-seguridad.md`.
+
 🛠️ Blueprint de Especificación Funcional (Enfoque SDD)
 [Buenas Prácticas de Desarrollo de Software con IA (MoureDev)](https://app.notion.com/p/Buenas-Pr-cticas-de-Desarrollo-de-Software-con-IA-MoureDev-4182fac3517e8014bab3f1f26170593c?pvs=21)
 ## CAPA 1: CONTEXTO Y DELIMITACIÓN (El Qué y El Quién)
 
 1. Alcance Operativo Actual (Current State)
 
-- **Capacidad Core:** La aplicación funciona como una **Landing Page de venta y catálogo**, vinculada a **una única plantilla de invitación digital interactiva**. El sistema permite a los novios gestionar su lista de invitados antes del envío y visualizar las confirmaciones, menús y datos analíticos en tiempo real después de que los invitados responden.
+- **Capacidad Core:** La aplicación funciona como una **Landing Page de venta y catálogo**, vinculada a **una plantilla de invitación digital interactiva** (`/papel-rasgado`, con capa lógica R.S.V.P. global reutilizable para futuras plantillas). El sistema permite a los novios gestionar su lista de invitados antes del envío y visualizar las confirmaciones, menús y datos analíticos en tiempo real después de que los invitados responden.
 
 - **Objetivo de la Función:** Centralizar la venta de invitaciones mediante un catálogo web cotizado por WhatsApp, y automatizar el flujo de confirmación de asistencia (R.S.V.P.) eliminando las planillas manuales de los novios.
 
@@ -35,62 +37,59 @@
 -   
 Todas las claves primarias utilizan generación nativa `uuidv7()` de PostgreSQL 18.7 para mantener orden secuencial en índices B-Tree sin exponer identificadores predecibles:  
 • **Tipo Enumerado (**`**tipo_menu_enum**`**):** `'Estándar'`, `'Vegetariano'`, `'Vegano'`, `'Celíaco'`, `'Menú Infantil'`.   
-**1. **`**admins**`** (Lista blanca de SuperAdmins):**  
+**1. `admins` (Lista blanca de SuperAdmins):**  
 • `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`  
-• `nombre`: `varchar(100)` — `NOT NULL`  
-• `email_google`: `varchar(255)` — `UNIQUE`, `NOT NULL` *(normalizado a minúsculas mediante `.trim().toLowerCase()` en validación Zod)*  
+• `nombre`: `varchar(80)` — `NOT NULL`  
+• `email_google`: `varchar(160)` — `UNIQUE`, `NOT NULL` *(normalizado a minúsculas mediante `.trim().toLowerCase()` en validación Zod)*  
 • `activo`: `boolean` — `NOT NULL`, `DEFAULT true`  
 • `created_at`: `timestamptz` — `NOT NULL`, `DEFAULT now()`  
-**2. **`**novios**`** (Cuentas de boda y configuración principal):**  
+
+**2. `novios` (Cuentas de boda y configuración principal):**  
 • `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`  
 • `admin_id`: `uuid` — `FK -> admins.id` (`ON DELETE RESTRICT`), `NOT NULL`  
-• `nombres_pareja`: `varchar(150)` — `NOT NULL`  
-• `slug_plantilla`: `varchar(100)` — `NOT NULL` (identificador de la plantilla del catálogo)  
+• `nombres_pareja`: `varchar(100)` — `NOT NULL`  
+• `slug_plantilla`: `varchar(50)` — `NOT NULL` (identificador de la plantilla del catálogo)  
 • `fecha_evento`: `timestamptz` — `NULL` (opcional; permite diferir o automatizar la creación de invitaciones cuando la fecha vive en el diseño)  
-• `rsvp_deadline`: `timestamptz` — `NOT NULL` (fecha límite para bloquear modificaciones de invitados)   
-`**max_accesos**` : `integer` — `NOT NULL`, `DEFAULT 2`, `CHECK (max_accesos >= 1)` *(cupo máximo de correos Google habilitados para administrar esta boda)*.  
-• `created_at`: `timestamptz` — `NOT NULL`, `DEFAULT now()`
+• `rsvp_deadline`: `timestamptz` — `NOT NULL` (fecha límite para bloquear modificaciones de invitados)  
+• `max_accesos`: `smallint` — `NOT NULL`, `DEFAULT 3`, `CHECK (max_accesos >= 1 AND max_accesos <= 10)` *(cupo máximo de correos Google habilitados con `activo = true` para administrar esta boda)*.  
+• `max_invitaciones`: `smallint` — `NOT NULL`, `DEFAULT 1000`, `CHECK (max_invitaciones >= 1 AND max_invitaciones <= 1000)` *(tope máximo de familias invitadas por boda)*.  
+• `plantilla_mensaje`: `varchar(1000)` — `NULL` (plantilla compartida de mensaje con variables `{familia}`, `{enlace}`, `{pases}`)  
+• `timezone`: `varchar(64)` — `NOT NULL`, `DEFAULT 'America/Santiago'` *(zona horaria IANA de negocio)*  
+• `created_at`: `timestamptz` — `NOT NULL`, `DEFAULT now()`  
 
-- `plantilla_mensaje: text NULL` (plantilla compartida de mensaje con variables `{familia}`, `{enlace}`, `{pases}`)  
-  
-  
-**3. **`**accesos_autorizados**`** (Correos Google OAuth habilitados por boda — Relación **`**1:N**`** con **`**novios**`**):**
+**3. `accesos_autorizados` (Correos Google OAuth habilitados por boda — Relación `1:N` con `novios`):**
 
 - `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`
-
 - `novios_id`: `uuid` — `FK -> novios.id` (`ON DELETE CASCADE`), `NOT NULL`
-
-- `autorizado_por_admin_id`: `uuid` FK -> `admins.id` (ON DELETE SET NULL), NULL *(Actualizado: Registra qué SuperAdmin aprobó el correo; permite **`NULL`** cuando se ejecuta mediante **`MASTER_API_KEY`**)*  
-• `**email_google**` : `varchar(255)` — `NOT NULL` *(Actualizado: se reemplaza el **`UNIQUE`** global por la restricción compuesta **`UNIQUE (novios_id, email_google)`** para permitir que un mismo correo Google administre múltiples bodas sin duplicarse dentro de la misma boda; normalizado a minúsculas mediante **`.trim().toLowerCase()`** en validación Zod)*.**  
-**
-
+- `autorizado_por_admin_id`: `uuid` — `FK -> admins.id` (`ON DELETE SET NULL`), `NULL` *(registra qué SuperAdmin aprobó el correo; permite `NULL` cuando se ejecuta mediante `MASTER_API_KEY`)*
+- `email_google`: `varchar(160)` — `NOT NULL` *(restricción compuesta `UNIQUE (novios_id, email_google)` para permitir que un mismo correo Google administre múltiples bodas sin duplicarse dentro de la misma boda; normalizado a minúsculas mediante `.trim().toLowerCase()` en validación Zod)*
 - `activo`: `boolean` — `NOT NULL`, `DEFAULT true`
-
 - `created_at`: `timestamptz` — `NOT NULL`, `DEFAULT now()`  
-**4. **`**familias_invitadas**`** (Datos Pre-Envío inmutables por el invitado — Relación **`**1:N**`** con **`**novios**`**):**  
+
+**4. `familias_invitadas` (Datos Pre-Envío inmutables por el invitado — Relación `1:N` con `novios`):**  
 • `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`  
 • `novios_id`: `uuid` — `FK -> novios.id` (`ON DELETE CASCADE`), `NOT NULL`  
-• `token_enlace`: `varchar(120)` — `UNIQUE`, `NOT NULL` (slug amigable único para acceso público con sufijo aleatorio de 12 caracteres, ej. `familia-perez-8x9k2m7p4q1z`)   
-• `familia_nombre`: `varchar(150)` — `NOT NULL`   
-• `email`: `varchar(255)` — `NOT NULL` *(normalizado a minúsculas mediante `.trim().toLowerCase()` en validación Zod)*   
-• `telefono`: `varchar(30)` — `NULL` (opcional; preparado para futura integración de envíos por WhatsApp)
+• `token_enlace`: `varchar(80)` — `UNIQUE`, `NOT NULL` (slug amigable único con entropía criptográfica `node:crypto`)  
+• `familia_nombre`: `varchar(100)` — `NOT NULL`  
+• `email`: `varchar(160)` — `NULL` *(opcional para soportar invitados solo-WhatsApp, sin `UNIQUE` por boda; normalizado con `.trim().toLowerCase()` en Zod)*  
+• `telefono`: `varchar(20)` — `NULL` *(opcional; saneado flexible de 8..20 caracteres con `+` opcional)*  
+• `num_adultos`: `smallint` — `NOT NULL`, `CHECK (num_adultos >= 1 AND num_adultos <= 20)` *(mínimo 1, máximo 20)*  
+• `num_ninos`: `smallint` — `NOT NULL`, `DEFAULT 0`, `CHECK (num_ninos >= 0 AND num_ninos <= 15)` *(mínimo 0, máximo 15; además `CHECK (num_adultos + num_ninos <= 30)`)*  
+• `mensaje_personalizado`: `varchar(300)` — `NULL`  
+• `invitacion_enviada_at`: `timestamptz` — `NULL` *(fecha de envío por correo electrónico)*  
+• `whatsapp_enviado_at`: `timestamptz` — `NULL` *(fecha de envío por WhatsApp, independiente del canal correo)*  
 
-- `**num_adultos**` : `integer` — `NOT NULL`, `CHECK (num_adultos >= 1)` *(mínimo 1)*.
-
-- `**num_ninos**` : `integer` — `NOT NULL`, `DEFAULT 0`, `CHECK (num_ninos >= 0)` *(mínimo 0)*.  
-• `mensaje_personalizado`: `text` — `NULL`
-
-- `invitacion_enviada_at: timestamptz -- NULL`   
-**5. **`**respuestas_rsvp**`** (Confirmación Post-Envío — Relación **`**1:1**`** con **`**familias_invitadas**`**):**  
+**5. `respuestas_rsvp` (Confirmación Post-Envío — Relación `1:1` con `familias_invitadas`):**  
 • `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`  
 • `familia_id`: `uuid` — `UNIQUE`, `FK -> familias_invitadas.id` (`ON DELETE CASCADE`), `NOT NULL` (la ausencia de fila indica estado *"Pendiente"*)  
-• `asistencia_confirmada`: `boolean` — `NOT NULL` (`true` = Asiste, `false` = No asiste)   
-• `**cant_asistentes**` : `integer` — `NOT NULL`, `CHECK (cant_asistentes >= 0)`.**  
-**• `alergias`: `text` — `NULL`   
-• `cancion_favorita`: `varchar(200)` — `NULL`   
-• `mensaje_novios`: `text` — `NULL`   
+• `asistencia_confirmada`: `boolean` — `NOT NULL` (`true` = Asiste, `false` = No asiste)  
+• `cant_asistentes`: `smallint` — `NOT NULL`, `CHECK (cant_asistentes >= 0 AND cant_asistentes <= 30)` *(además `CHECK ((asistencia_confirmada = false AND cant_asistentes = 0) OR (asistencia_confirmada = true AND cant_asistentes >= 1))`)*  
+• `alergias`: `varchar(300)` — `NULL`  
+• `cancion_favorita`: `varchar(120)` — `NULL`  
+• `mensaje_novios`: `varchar(500)` — `NULL`  
 • `updated_at`: `timestamptz` — `NOT NULL`, `DEFAULT now()`  
-**6. **`**rsvp_menus**`** (Desglose individual de platos — Relación **`**1:N**`** con **`**respuestas_rsvp**`**):**  
+
+**6. `rsvp_menus` (Desglose individual de platos — Relación `1:N` con `respuestas_rsvp`):**  
 • `id`: `uuid` — `PK`, `NOT NULL`, `DEFAULT uuidv7()`  
 • `respuesta_id`: `uuid` — `FK -> respuestas_rsvp.id` (`ON DELETE CASCADE`), `NOT NULL`  
 • `tipo_menu`: `tipo_menu_enum` — `NOT NULL`
@@ -101,7 +100,7 @@ Todas las claves primarias utilizan generación nativa `uuidv7()` de PostgreSQL 
 
 - `familia_nombre` (String, Requerido): Nombre identificador de la invitación (Ej: "Familia Pérez Silva").
 
-- `email` (String, Requerido): Email validado con estructura estándar (`user@domain.com`).
+- `email` (String, Opcional): Email validado con estructura estándar (`user@domain.com`); opcional para soportar invitados solo-WhatsApp.
 
 - `telefono` (String, Opcional): Número de celular de contacto de la familia (preparado para futura integración de envíos por WhatsApp). 
 
@@ -155,55 +154,32 @@ Dado que PostgreSQL solo crea índices automáticos en `PRIMARY KEY` y `UNIQUE`,
 
 - **FAQ:** Acordeón de preguntas frecuentes para resolver dudas de clientes.
 
-> **Invitación Interactiva (Vista del Invitado — Endpoint **`**/papel-rasgado**`**):**
+> **Invitación Interactiva (Vista del Invitado — Endpoint `/papel-rasgado` y `/disenos/papel-rasgado`):**
 
-1. **Sobre Interactivo (**`**BeachEnvelope**`**):** Apertura animada de sobre artesanal con solapa.
-
-1. **Hero Section (**`**BeachHero**`**):** Fotografía principal con efecto de particulas.
-
-1. **Cuenta Regresiva (**`**BeachCountdown**`**):** Anuncio de fecha/hora y contador en vivo (toma `novios.fecha_evento` si está definida, o la fecha configurada en la plantilla si es `NULL`). **[actualizado]**
-
-1. **Frase Romántica (**`**BeachQuote**`**):** Cita emotiva de la pareja enmarcada.
-
-1. **Galería de Recuerdos (**`**BeachGallery**`**):** Carrusel de fotos con marco artesanal.
-
-1. **Ubicación & Acceso (**`**BeachLocation**`**):** Dirección del recinto con google maps button.
-
-1. **Itinerario del Evento (**`**BeachItinerary**`**):** Línea de tiempo vertical con guía dorada.
-
-1. **Código de Vestimenta (**`**BeachDressCode**`**):** Estilo sugerido con guía visual.
-
-1. **Mesa de Regalos (**`**BeachGift**`**):** Caja de regalo interactiva que abre modal con datos.
-
-1. **Álbum de Fotos Compartido (**`**BeachPhotoAlbum**`**):** Código QR dinámico y enlace directo.
-
-1. **Confirmación de Asistencia (**`**BeachRsvp**`**):** Formulario R.S.V.P. vinculado al `token_enlace`. **[actualizado]**
-
-1. **Firma & Despedida (**`**BeachSignature**`**):** Cierre caligráfico con los nombres de los novios.
-
-1. **Separadores Rasgados (**`**ArtisanTornDivider**`** / **`**BeachTornDivider**`**):** Divisores visuales de papel rasgado.
+- La arquitectura frontend separa la **capa lógica global de R.S.V.P.** (`src/types/rsvp.ts`, `src/data/rsvpDefaults.ts`, `src/utils/rsvpUtils.ts`, `src/hooks/useRsvp.ts`, `useRsvpForm.ts`, `useModal.ts`, `useInvitationParams.ts`, con contrato `RsvpAdapter` `demo`/`api` y `RsvpFeatureFlags`) de la **capa visual por plantilla** (`src/components/<plantilla>/`).
+- En `papel-rasgado` se incluyen los bloques visuales: Sobre Interactivo, Hero, Cuenta Regresiva (toma `novios.fecha_evento` o fecha de plantilla si es `NULL`), Frase Romántica, Galería, Ubicación, Itinerario, Código de Vestimenta, Mesa de Regalos, Álbum Compartido, Confirmación R.S.V.P. vinculada al `token_enlace`, Firma y Separadores Rasgados. (Nota: las rutas del panel `/panel/login`, `/panel/seleccionar-boda`, `/panel/pre-envio` y `/panel/dashboard` siguen pendientes de creación en `frontend-tuinvitacionespecial/src/pages/`).
 
 **Panel R.S.V.P. PRE-Envío (Configuración de Invitados):**
 
 - **Descarga de Plantilla Oficial:** Botón visible *"Descargar plantilla de ejemplo (.xlsx / .csv)"* que entrega un archivo preconfigurado con las cabeceras oficiales (`familia_nombre`, `email`, `**telefono**`, `num_adultos`, `num_ninos`, `mensaje_personalizado`) y 2 filas de muestra para guiar a los novios.
 
-- **Zona de Carga Masiva (Dropzone):** Área de arrastrar y soltar para archivos `.xlsx` y `.csv` con asistente de mapeo y tabla de previsualización editable (*Staging*).
+- **Zona de Carga Masiva (Dropzone):** Área de arrastrar y soltar para archivos `.xlsx` y `.csv` con asistente de mapeo y tabla de previsualización editable (*Staging*), respetando el tope máximo de `1.000` familias por boda (`novios.max_invitaciones`).
 
 - **Formulario de Carga Individual:** Campos manuales para agregar familias una por una sin necesidad de usar Excel.
 
-- **Constructor de Mensaje Unificado y Borrador en Vivo:** Editor de texto compartido entre ambos novios (`novios.plantilla_mensaje`) que soporta variables dinámicas (`{familia}`, `{enlace}`, `{pases}`) y una casilla/selector de previsualización en tiempo real para visualizar cómo quedará el mensaje exacto antes de enviarlo. 
+- **Constructor de Mensaje Unificado y Borrador en Vivo:** Editor de texto compartido entre ambos novios (`novios.plantilla_mensaje`, máx. `1000` chars) que soporta variables dinámicas (`{familia}`, `{enlace}`, `{pases}`) y una casilla/selector de previsualización en tiempo real para visualizar cómo quedará el mensaje exacto antes de enviarlo. 
 
-- **Tabla Maestra Pre-Envío (Gestión CRUD y Distribución Granular WhatsApp):** Lista interactiva de `familias_invitadas` con indicador de estado de envío (`invitacion_enviada_at`) y enlace amigable individual (`token_enlace`). Cada fila integra acciones directas para: 
+- **Tabla Maestra Pre-Envío (Gestión CRUD y Distribución Granular WhatsApp):** Lista interactiva de `familias_invitadas` con indicadores de estado de envío separados por canal (`invitacion_enviada_at` para correo y `whatsapp_enviado_at` para WhatsApp) y enlace amigable individual (`token_enlace`). Cada fila integra acciones directas para: 
 
-  - **Distribuir por WhatsApp:** Botón de apertura directa en WhatsApp Web (`[https://wa.me/](https://wa.me/){telefono}?text=...`) con el mensaje interpolado y botón de copia rápida. 
+  - **Distribuir por WhatsApp (Opción A — Cola guiada y botón por fila):** Apertura directa en WhatsApp Web (`https://wa.me/{telefono}?text=...`) con validación previa de teléfonos, guardrails UX anti-spam y registro independiente en `whatsapp_enviado_at`. 
 
   - **Gestionar registros (CRUD):** Acciones para **editar** datos (nombre, correo, teléfono, cantidad de adultos/niños, mensaje personalizado) y **eliminar** familias de la lista (con confirmación visual si la familia ya tiene un R.S.V.P. registrado, ya que `ON DELETE CASCADE` eliminará su respuesta y platos asociados).
 
-- **Acción de Envío Masivo por Correo (1-Click con Modal de Confirmación):** Botón principal *"Enviar invitaciones por Correo"* que abre un **modal de confirmación obligatorio** detallando: cantidad exacta de destinatarios seleccionados (o pendientes de envío), asunto del correo y una vista previa del borrador interpolado. Al confirmar, despacha los correos en segundo plano sin bloquear la interfaz.
+- **Acción de Envío Masivo por Correo (1-Click con Modal de Confirmación):** Botón principal *"Enviar invitaciones por Correo"* que preselecciona por defecto las familias pendientes con `email` válido (aceptando selección/reenvío manual `familyIds`) y asunto fijo en v1 (`"¡Estás invitado a la boda de {nombres_pareja}!"`). Abre un **modal de confirmación obligatorio** y despacha en segundo plano vía BullMQ (`202 Accepted`).
 
 #### **Panel R.S.V.P. POST-Envío (Dashboard de los Novios):**
 
-- **Resumen Ejecutivo:** Tarjetas numéricas con Total Invitados Confirmados, Invitados Pendientes / en Duda (registros de `familias_invitadas` sin fila en `respuestas_rsvp`), No Asistirán y un contador de Días Restantes para la boda (calculado desde `fecha_evento`, o mostrando los días restantes hasta `rsvp_deadline` si `fecha_evento` es `NULL`). 
+- **Resumen Ejecutivo:** Tarjetas numéricas devolviendo **personas/pases y familias** (Total Invitados Confirmados, Pendientes, No Asistirán —cuadrando cupos no usados de confirmaciones parciales— y Días Restantes según `timezone` / `America/Santiago`). 
 
 - **Gestión de Menús:** Gráfico o lista que agrupa `rsvp_menus` por `tipo_menu` con la Cantidad Seleccionada acumulada. 
 
@@ -215,11 +191,11 @@ Dado que PostgreSQL solo crea índices automáticos en `PRIMARY KEY` y `UNIQUE`,
 
 - **Tabla Maestra de Invitados:** Grilla interactiva con filtros rápidos (`Confirmados`, `No asistentes`, `Pendientes`). Columnas requeridas: `Familia/Invitado`, `Pases Totales`, `Asistentes Confirmados`, `Tipo de Menú`, `Canción`, `Mensaje`, y `Fecha de Respuesta` (`updated_at`). 
 
-- **Archivo CSV de Salida:** Botón "Descargar Excel" que genera un archivo estructurado con toda la Tabla Maestra.
+- **Archivo `.xlsx` Nativo de Salida:** Botón "Descargar Excel" que genera un `.xlsx` nativo de 2 hojas (`Resumen y Menús` y `Lista de Familias`), teléfonos como texto y neutralización obligatoria de *Formula Injection* (`=`, `+`, `-`, `@`).
 
 #### **4. Permisos de Usuario (RBAC) y Reglas de Negocio**
 
-- **Permiso SuperAdmin (Propietario de la Plataforma):** Acceso exclusivo mediante inicio de sesión con Google validado contra la lista blanca de la tabla `admins` (y respaldo de `MASTER_API_KEY` para scripts administrativos) para dar de alta nuevas bodas en `novios`, definir su fecha límite (`rsvp_deadline`), fecha opcional del evento (`fecha_evento`), el límite de accesos (`max_accesos`) y autorizar los correos de los novios en `accesos_autorizados` tras cerrar la venta por WhatsApp **[Actualizado: registrando su **`**admin.id**`** en **`**autorizado_por_admin_id**`** para auditoría, o **`**NULL**`** si se ejecuta vía API Key]**
+- **Permiso SuperAdmin (Propietario de la Plataforma):** Operación vía API/scripts en v1 (`/api/admin/*`) mediante sesión Google de usuario activo en `admins` o `MASTER_API_KEY` (validada en tiempo constante, aislada por red/IP en Caddy en producción). Da de alta nuevas bodas en `novios`, define `rsvp_deadline`, `fecha_evento` opcional, `max_accesos` (default `3`, rango `1..10`), `max_invitaciones` (default `1000`) y autoriza correos en `accesos_autorizados` (registrando `admin.id` en `autorizado_por_admin_id`, o `NULL` si se ejecuta vía `MASTER_API_KEY`).
 
 **Permiso Novios (Cliente — Acceso Compartido y Multi-Boda):** Acceso exclusivo mediante Inicio de Sesión con Google (Google OAuth) en las rutas del frontend (`/panel/login`, `/panel/seleccionar-boda`, `/panel/pre-envio`, `/panel/dashboard`). El sistema consulta todas las filas activas en `accesos_autorizados` (`activo = true`) vinculadas al correo autenticado:
 
@@ -291,9 +267,14 @@ Cada fila se valida en memoria en el navegador utilizando el mismo esquema de re
 
 ### **Contrato JSON Limpio y Guardado Atómico en Backend:**
 
-- El servidor nunca recibe ni parsea archivos planos directamente. Una vez que los novios confirman la tabla de previsualización sin errores bloqueantes, el cliente envía un arreglo **JSON limpio y tipado** al endpoint `POST /api/invitations/batch`.
+- El servidor nunca recibe ni parsea archivos planos directamente. Una vez que los novios confirman la tabla de previsualización sin errores bloqueantes (y dentro del cupo `max_invitaciones <= 1000`), el cliente envía un arreglo **JSON limpio y tipado** al endpoint `POST /api/weddings/:noviosId/invitations/batch` (`bodyLimit: 512 KiB`).
 
--  Fastify revalida el lote completo en el servidor por seguridad y ejecuta una inserción masiva en `familias_invitadas` dentro de una única transacción ACID (`COMMIT` total o `ROLLBACK` ante fallos inesperados), generando los `token_enlace` amigables correspondientes. 
+- Fastify revalida el lote completo en el servidor por seguridad y ejecuta una inserción masiva en `familias_invitadas` dentro de una única transacción ACID (`COMMIT` total o `ROLLBACK` ante fallos inesperados, validando `existentes + lote <= max_invitaciones` con `FOR UPDATE` sobre `novios`), generando los `token_enlace` amigables correspondientes.
+
+> **Contratos HTTP oficiales (`notas-api-y-seguridad.md`) y estado actual en `src/app.ts`:**
+> - **Rutas oficiales definidas:** `/api/auth/*` (`google`, `me`, `logout`), `/api/admin/*` (`weddings`, `accesses`), `/api/weddings/:noviosId/*` (`settings`, `message-template`, `families`, `whatsapp-sent`, `invitations/batch`, `invitations/send-emails`), `/api/weddings/:noviosId/dashboard/*` (`GET`, `export`, `stream` SSE) y `/api/public/invitations/:token` (`GET`, `PUT .../rsvp`).
+> - **Seguridad perimetral activa en `app.ts`:** `@fastify/helmet`, CORS estricto, `@fastify/cookie`, `@fastify/rate-limit` sobre Redis (`120 req/min` global), hook CSRF (`Origin`/`Referer`), `bodyLimit` (`64 KiB` global / `512 KiB` batch), redacción de cookies/keys en logger y `user_sessions:<email>` en Redis para revocación instantánea.
+> - **Implementado hoy en backend:** `GET /health` (PostgreSQL + Redis) y los middlewares globales; las rutas de negocio siguen pendientes de implementación en Fase 2. 
 
 - **Confirmaciones Simultáneas y Edición de Respuesta (Patrón Transaccional *****Delete-Insert*****):** Si dos miembros de una misma familia abren el enlace al mismo tiempo, el sistema garantiza la consistencia serializando las escrituras por `familia_id` mediante bloqueo a nivel de fila en PostgreSQL (`SELECT ... FOR UPDATE` sobre `respuestas_rsvp`) o mediante encolamiento secuencial por familia en BullMQ (Redis 8.0), asegurando que persista únicamente el último envío recibido. Cuando una familia modifica una confirmación previa (ej. cambia de 4 a 2 asistentes o altera sus platos), la transacción actualiza la fila única en `respuestas_rsvp` (`updated_at = now()`), ejecuta un reemplazo atómico en `rsvp_menus` (`DELETE` de los platos previos asociados a ese `respuesta_id` seguido de `INSERT` de los nuevos platos) y **recalcula desde cero** los contadores totales de la boda para evitar duplicidades en el panel.
 
@@ -384,11 +365,11 @@ Y el servidor rechaza cualquier intento de envío para proteger el cierre de lis
 | **Reverse Proxy / TLS** | **Caddy Server (ARM64)** | `**2.11.9 **`***Not LTS*** | Binario nativo `arm64`, HTTPS/HTTP3 automático y soporte *zero-config* para streaming SSE. |
 | **Frontend** | **Astro + React + Tailwind** | `Astro 5.18` / `React 18.3` / `TW 3.4 `***Not LTS*** | Islands Architecture con TypeScript (`5.7.2+`, independiente del backend) y shaders SVG. |
 | **Runtime Backend** | **Node.js LTS** | `**v26 LTS**` *(Fallback: **`v24 LTS`**) * | Soporte activo hasta **Abril 2029**, ejecución TS nativa y optimización V8 para ARM64. |
-| **Lenguaje Backend** | **TypeScript** | `**7.0.x **`***Not LTS*** | Compilador nativo en Go (`tsgo`), y y que Node 26 LTS ejecuta TS de forma nativa. |
-| **Framework API** | **Fastify** | `**v5.x LTS**` *(Estable) * | Serialización JSON de alta velocidad, bajo uso de CPU en 2 OCPU y arquitectura modular. |
-| **Motor de Contratos SDD** | **Zod** + `fastify-type-provider-zod` | `**v4.x**` *(Estable) ****Not LTS*** | Validación ultrarrápida de contratos de Capa 2 (`BR-01`, enums) y parseo masivo de filas CSV. |
-| **Base de Datos** | **PostgreSQL** | `**18.7 LTS **`*(Lanzamiento 19 Nov 2026)* | `uuidv7()` nativo, I/O asíncrono (AIO), transacciones ACID (Rollback CSV) y `SELECT ... FOR UPDATE`. |
-| **ORM / Migraciones** | **Drizzle ORM** + `drizzle-kit` | `**v0.45.4**` *(Estable) ****Not LTS*** | Consultas SQL *type-safe* de cero sobrecarga en TS 7.0.2 sin motores binarios pesados en ARM64. |
+| **Lenguaje Backend** | **TypeScript** | `7.0.2` *(Not LTS)* | Compilador nativo en Go (`tsgo`), con `erasableSyntaxOnly`, `verbatimModuleSyntax` y convención de declaraciones `function` (Principio 11). |
+| **Framework API** | **Fastify** | `v5.x` (`^5.12.8`) | Serialización JSON de alta velocidad, bajo uso de CPU en 2 OCPU y arquitectura modular. |
+| **Motor de Contratos SDD** | **Zod** + `fastify-type-provider-zod` | `v4.x` (`^4.6.7`) + `^7.0.0` | Validación ultrarrápida de contratos de Capa 2 (`BR-01`, enums, `DB_LIMITS`) y parseo masivo de filas. |
+| **Base de Datos** | **PostgreSQL** | `18.7 LTS` *(Lanzamiento 19 Nov 2026)* | `uuidv7()` nativo, I/O asíncrono (AIO), transacciones ACID (Rollback batch) y `SELECT ... FOR UPDATE`. |
+| **ORM / Migraciones** | **Drizzle ORM** + `drizzle-kit` | `0.45.4` + `^0.31.11` | Consultas SQL *type-safe* de cero sobrecarga en TS 7.0.2 sin motores binarios pesados en ARM64. |
 | **Gestor de Colas** | **BullMQ** | `**v6.7.0**` * ****Not LTS*** | Colas de trabajo asíncronas, reintentos exponenciales y desacoplamiento de analíticas post-RSVP. |
 | **Motor In-Memory** | **Redis** | `**8.0 LTS**` *(**`redis:8.0-alpine`**)* | Ejecución atómica de scripts Lua para BullMQ, almacenamiento de sesiones stateful (Camino B con TTL de 7 días) y bus *Pub/Sub* para el Dashboard en tiempo real. |
 | **Correo Transaccional (Email SDK)** | `resend` (SDK oficial Node.js) | **v6.38.0** *(Estable — Not LTS; sin rama LTS propia)* | Paquete TypeScript puro sin binarios nativos (100% agnóstico a la arquitectura `linux/arm64`), utiliza la API `fetch` nativa de Node 26 LTS, soporta envío por lotes (`POST /emails/batch` de hasta 100 correos por petición) y cabeceras `Idempotency-Key` para evitar duplicados en reintentos de BullMQ. |

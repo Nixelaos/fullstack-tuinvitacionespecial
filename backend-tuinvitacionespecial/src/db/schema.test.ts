@@ -76,7 +76,7 @@ test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
 
   const expectedSmallInts: Array<readonly [(typeof ALL_TABLES)[number], string]> = [
     [novios, 'max_accesos'],
-    [novios, 'max_familias'],
+    [novios, 'max_invitaciones'],
     [familiasInvitadas, 'num_adultos'],
     [familiasInvitadas, 'num_ninos'],
     [respuestasRsvp, 'cant_asistentes'],
@@ -88,9 +88,9 @@ test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
     assert.equal(column.getSQLType(), 'smallint');
   }
 
-  const maxFamilias = findColumn(novios, 'max_familias');
-  assert.equal(maxFamilias.default, DB_LIMITS.NOVIOS_MAX_FAMILIAS_MAX);
-  assert.equal(maxFamilias.notNull, true);
+  const maxInvitaciones = findColumn(novios, 'max_invitaciones');
+  assert.equal(maxInvitaciones.default, DB_LIMITS.NOVIOS_MAX_FAMILIAS_MAX);
+  assert.equal(maxInvitaciones.notNull, true);
 });
 
 
@@ -98,7 +98,7 @@ test('los tipos y longitudes de columnas coinciden con DB_LIMITS', () => {
 test('existen todos los CHECK constraints de rangos y consistencia R.S.V.P.', () => {
   const noviosChecks = getTableConfig(novios).checks.map((c) => c.name);
   assert.ok(noviosChecks.includes('chk_novios_max_accesos'));
-  assert.ok(noviosChecks.includes('chk_novios_max_familias'));
+  assert.ok(noviosChecks.includes('chk_novios_max_invitaciones'));
 
   const familiasChecks = getTableConfig(familiasInvitadas).checks.map((c) => c.name);
   assert.ok(familiasChecks.includes('chk_familias_num_adultos'));

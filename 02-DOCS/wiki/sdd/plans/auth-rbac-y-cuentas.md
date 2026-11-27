@@ -23,11 +23,11 @@ Los siguientes valores exactos aplican implícitamente a todas las tareas (`T001
 - **Stack cerrado Frontend (Bloque 6):** Astro `5.18.2` (`output: 'static'`), React `18.3.1`, Tailwind CSS `3.4.17`, TypeScript `5.7.2`.
 - **Disciplina TDD y comandos de verificación (`config.yaml`):** `strict_tdd: true` (ciclo obligatorio Red → Green → Refactor). Verificación backend: `cd backend-tuinvitacionespecial && npm run build && npm test`. Verificación frontend: `cd frontend-tuinvitacionespecial && npm test && npx tsc --noEmit && npm run build`.
 - **Presupuesto de revisión:** Máximo `400` líneas cambiadas y `12` archivos por bloque o entrega incremental (`02-DOCS/wiki/sdd/config.yaml`).
-- **Sobre de error HTTP estándar:** Toda respuesta de error devuelve exactamente `{ "code": "SCREAMING_SNAKE_CASE", "message": "Mensaje claro en español", "details"?: unknown }`. Códigos HTTP obligatorios: `400` (esquema Zod o JSON inválido / parámetro faltante), `401` (credenciales ausentes, sesión expirada/revocada, Google ID Token inválido o `x-api-key` inválido), `403` (correo fuera de lista blanca o `activo = false`, aislamiento `BR-06`, fallo CSRF, novio intentando acción SuperAdmin), `404` (boda, admin o acceso inexistente), `409` (`BR-04` `max_accesos`, `max_familias` por debajo del conteo actual, o duplicado `uq_accesos_novios_email`), `413` (`bodyLimit` excedido), `429` (Rate Limit Redis excedido), `500` (error interno sin stack trace ni SQL crudo).
+- **Sobre de error HTTP estándar:** Toda respuesta de error devuelve exactamente `{ "code": "SCREAMING_SNAKE_CASE", "message": "Mensaje claro en español", "details"?: unknown }`. Códigos HTTP obligatorios: `400` (esquema Zod o JSON inválido / parámetro faltante), `401` (credenciales ausentes, sesión expirada/revocada, Google ID Token inválido o `x-api-key` inválido), `403` (correo fuera de lista blanca o `activo = false`, aislamiento `BR-06`, fallo CSRF, novio intentando acción SuperAdmin), `404` (boda, admin o acceso inexistente), `409` (`BR-04` `max_accesos`, `max_invitaciones` por debajo del conteo actual, o duplicado `uq_accesos_novios_email`), `413` (`bodyLimit` excedido), `429` (Rate Limit Redis excedido), `500` (error interno sin stack trace ni SQL crudo).
 - **`bodyLimit` Fastify:** `65536` bytes (`64 KiB`) global en la instancia Fastify; constante exportada `BODY_LIMIT_BATCH_BYTES = 524288` (`512 KiB`) reservada exclusivamente para la ruta futura `POST /api/weddings/:noviosId/invitations/batch`.
 - **Normalización de correos, `DB_LIMITS` e integridad esquema–migración:** Todo correo electrónico se normaliza con `.trim().toLowerCase()` y tope `DB_LIMITS.EMAIL_MAX = 160`. Prohibido usar columnas `PgText` (`TEXT`) o `PgInteger` (`INTEGER`) sin cota superior. Ajustes obligatorios de migración `0002`:
   - `novios.max_accesos`: `smallint NOT NULL DEFAULT 3` (`CHECK >= 1 AND <= 10`).
-  - `novios.max_familias`: `smallint NOT NULL DEFAULT 1000` (`CHECK >= 1 AND <= 1000`).
+  - `novios.max_invitaciones`: `smallint NOT NULL DEFAULT 1000` (`CHECK >= 1 AND <= 1000`).
   - `novios.timezone`: `varchar(64) NOT NULL DEFAULT 'America/Santiago'` (`DB_LIMITS.NOVIOS_TIMEZONE_MAX = 64`).
   - `familias_invitadas.email`: `varchar(160)` nullable (`NULL` permitido, sin restricción `UNIQUE`).
   - `familias_invitadas.whatsapp_enviado_at`: `timestamptz` nullable independiente de `invitacion_enviada_at`.
@@ -48,7 +48,7 @@ Los siguientes valores exactos aplican implícitamente a todas las tareas (`T001
   - `AC3` (`spec §Acceptance #3`, `BR-06`): un planner activo en `>= 2` bodas recibe la lista de bodas activas y debe elegir una antes de operar.
   - `AC4` (`spec §Acceptance #4`, `BR-06`): un usuario autorizado en la Boda A que intenta operar sobre la Boda B recibe `403` sin fuga ni mutación.
   - `AC5` (`spec §Acceptance #5`): correo Google con `0` bodas activas o desactivado recibe rechazo explícito (`403` en login / sin acceso al panel).
-  - `AC6` (`spec §Acceptance #6`): un novio autenticado no puede alterar `rsvp_deadline`, `max_accesos`, `max_familias` ni `slug_plantilla` (exclusivo de `/api/admin/*`).
+  - `AC6` (`spec §Acceptance #6`): un novio autenticado no puede alterar `rsvp_deadline`, `max_accesos`, `max_invitaciones` ni `slug_plantilla` (exclusivo de `/api/admin/*`).
   - `AC7` (`spec §Acceptance #7`, `P14`): `POST /api/auth/logout` o paso a `activo = false` revoca la sesión en Redis al instante sin esperar el vencimiento de ~1 h del JWT de Google.
 - **Restricciones constitucionales y de contratos:**
   - [constitution.md](../constitution.md) Principios `1`–`18`, `20`, `22`–`23` (stack Fastify v5 + Zod v4 + Drizzle + PostgreSQL 18.7 + Redis 8.0, migraciones sincronizadas, Camino B `604 800` s, Anti-IDOR SQL, CSRF, Rate Limit, Helmet/CORS/`bodyLimit`, cero secretos).
@@ -246,11 +246,11 @@ requireSuperAdmin(request, reply) -> adjunta request.adminActor: AdminActor
     3) Sin x-api-key ni cookie sid -> 401 AUTH_REQUIRED.
 
 GET /api/admin/weddings  [requireSuperAdmin]
-  -> 200 { weddings: Array<WeddingSummary & { adminId: uuid, maxAccesos: number, maxFamilias: number, activeAccessCount: number, familyCount: number, createdAt: string }> }
+  -> 200 { weddings: Array<WeddingSummary & { adminId: uuid, maxAccesos: number, maxInvitaciones: number, activeAccessCount: number, familyCount: number, createdAt: string }> }
 
 POST /api/admin/weddings  [requireSuperAdmin]
   Input: { nombresPareja, slugPlantilla, fechaEvento?: isoDatetime | null, rsvpDeadline: isoDatetime,
-           maxAccesos?: int(1..10)=3, maxFamilias?: int(1..1000)=1000, plantillaMensaje?: string | null,
+           maxAccesos?: int(1..10)=3, maxInvitaciones?: int(1..1000)=1000, plantillaMensaje?: string | null,
            timezone?: ianaTimezone='America/Santiago', adminId?: uuid }
   -> 201 { wedding } | 400 | 403 ADMIN_OWNER_MISMATCH | 404 ADMIN_NOT_FOUND
 
@@ -258,7 +258,7 @@ PATCH /api/admin/weddings/:noviosId  [requireSuperAdmin]
   Input: partial de campos editables (al menos 1 campo)
   - transaction ACID (FOR UPDATE sobre novios):
     - si maxAccesos < COUNT(accesos_autorizados WHERE novios_id = $1 AND activo = true) -> 409 MAX_ACCESSES_BELOW_ACTIVE
-    - si maxFamilias < COUNT(familias_invitadas WHERE novios_id = $1) -> 409 MAX_FAMILIES_BELOW_CURRENT
+    - si maxInvitaciones < COUNT(familias_invitadas WHERE novios_id = $1) -> 409 MAX_FAMILIES_BELOW_CURRENT
   -> 200 { wedding } | 404 WEDDING_NOT_FOUND | 409
 
 GET /api/admin/weddings/:noviosId/accesses  [requireSuperAdmin]
@@ -311,7 +311,7 @@ formatWeddingCardDate(wedding: Pick<WeddingSummary, 'fechaEvento' | 'rsvpDeadlin
 ### Entidades y cambios en la migración `0002`
 
 - **`admins`:** `id` (uuidv7), `nombre` (`varchar(80)`), `email_google` (`varchar(160) UNIQUE`), `activo` (`boolean DEFAULT true`). Sin cambios de esquema en `0002`.
-- **`novios`:** `id` (uuidv7), `admin_id` (`uuid NOT NULL REFERENCES admins`), `nombres_pareja` (`varchar(100)`), `slug_plantilla` (`varchar(50)`), `fecha_evento` (`timestamptz NULL`), `rsvp_deadline` (`timestamptz NOT NULL`), **`max_accesos` (`smallint NOT NULL DEFAULT 3`, `CHECK 1..10`)**, `max_familias` (`smallint NOT NULL DEFAULT 1000`, `CHECK 1..1000`), `plantilla_mensaje` (`varchar(1000) NULL`), **`timezone` (`varchar(64) NOT NULL DEFAULT 'America/Santiago'`)**.
+- **`novios`:** `id` (uuidv7), `admin_id` (`uuid NOT NULL REFERENCES admins`), `nombres_pareja` (`varchar(100)`), `slug_plantilla` (`varchar(50)`), `fecha_evento` (`timestamptz NULL`), `rsvp_deadline` (`timestamptz NOT NULL`), **`max_accesos` (`smallint NOT NULL DEFAULT 3`, `CHECK 1..10`)**, `max_invitaciones` (`smallint NOT NULL DEFAULT 1000`, `CHECK 1..1000`), `plantilla_mensaje` (`varchar(1000) NULL`), **`timezone` (`varchar(64) NOT NULL DEFAULT 'America/Santiago'`)**.
 - **`accesos_autorizados`:** `id` (uuidv7), `novios_id` (`uuid NOT NULL REFERENCES novios ON DELETE CASCADE`), `autorizado_por_admin_id` (`uuid NULL REFERENCES admins ON DELETE SET NULL`), `email_google` (`varchar(160)`), `activo` (`boolean NOT NULL DEFAULT true`), `UNIQUE (novios_id, email_google)` (`uq_accesos_novios_email`).
 - **`familias_invitadas` (deltas de soporte para specs hermanas incluidos en migración `0002`):** **`email` pasa de `NOT NULL` a `NULL` permitido (sin `UNIQUE`)**, y se agrega **`whatsapp_enviado_at` (`timestamptz NULL`)** independiente de `invitacion_enviada_at`.
 - **Almacén Redis 8.0:**
@@ -527,7 +527,7 @@ Para facilitar la lectura y aprobación entre sesiones sin revisar diffs extenso
 - Consumes: `requireSuperAdmin` (de `T015`), `schema` (`admins`, `novios`, `accesosAutorizados`, `familiasInvitadas`), `DB_LIMITS` + `ianaTimezoneSchema` (de `T002`).
 - Produces:
   - `src/schemas/admin.ts`: `createWeddingBodySchema`, `updateWeddingBodySchema`, `weddingParamsSchema`, `adminWeddingResponseSchema`.
-  - `src/services/adminWeddings.ts`: `listWeddings`, `createWedding` (incluye resolución determinista de `admin_id`), `updateWedding` (transacción `FOR UPDATE` validando `maxAccesos >= activos` y `maxFamilias >= familiasActuales` → `409`).
+  - `src/services/adminWeddings.ts`: `listWeddings`, `createWedding` (incluye resolución determinista de `admin_id`), `updateWedding` (transacción `FOR UPDATE` validando `maxAccesos >= activos` y `maxInvitaciones >= familiasActuales` → `409`).
   - `src/routes/admin.ts` registrado en `src/app.ts`: `GET /api/admin/weddings`, `POST /api/admin/weddings`, `PATCH /api/admin/weddings/:noviosId`.
 
 **T019 — Interfaces**

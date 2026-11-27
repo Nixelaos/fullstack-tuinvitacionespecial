@@ -21,7 +21,7 @@ Todo reporte de revisión debe abrir con el conteo exacto antes de detallar hall
    - Validación incompleta del token Google (`iss`, `aud`, `exp`, `email_verified`), comparación no constante de `MASTER_API_KEY`, o secretos/PII en logs o repositorio.
    - Almacenar sesiones fuera de cookie `HttpOnly; Secure; SameSite=Lax` (ej. en `localStorage`/`sessionStorage`) o sin revocación instantánea en Redis.
    - Omitir validación CSRF (`Origin`/`Referer`) en mutaciones con cookie, o omitir `@fastify/rate-limit`, `@fastify/helmet`, CORS restringido o `bodyLimit` en Fastify.
-   - Introducir columnas `TEXT` o `INTEGER` sin cota fuera de `DB_LIMITS` / `novios.max_familias <= 1000`, o exportar archivos tabulares (`.xlsx`/`.csv`) sin neutralizar Formula Injection (`=`, `+`, `-`, `@`).
+   - Introducir columnas `TEXT` o `INTEGER` sin cota fuera de `DB_LIMITS` / `novios.max_invitaciones <= 1000`, o exportar archivos tabulares (`.xlsx`/`.csv`) sin neutralizar Formula Injection (`=`, `+`, `-`, `@`).
 5. **Migración irreversible o desalineada:** Cambio en `src/db/schema.ts` sin su migración en `drizzle/` o pérdida silenciosa de datos sin estrategia explícita.
 6. **Bloqueo de cola o reenvíos duplicados:** Envío masivo síncrono dentro del request HTTP o sin `Idempotency-Key` / verificación de `invitacion_enviada_at`.
 

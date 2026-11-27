@@ -33,8 +33,8 @@ status: decided
 | Método y Ruta | Propósito y Contrato clave |
 |---|---|
 | `GET /api/admin/weddings` | Lista bodas registradas. |
-| `POST /api/admin/weddings` | Crea `novios` (`nombresPareja`, `slugPlantilla`, `fechaEvento?`, `rsvpDeadline`, `maxAccesos?` default `3` rango `1..10`, `maxFamilias?` default `1000`, `plantillaMensaje?`, `timezone?` default `'America/Santiago'`) validado contra `DB_LIMITS` (`201`). **Hallazgo técnico:** `novios.admin_id` es `NOT NULL` en BD; cuando se invoca con `MASTER_API_KEY` (sin sesión de admin), el body debe enviar `adminId` explícito o resolver un admin dueño por defecto. |
-| `PATCH /api/admin/weddings/:noviosId` | Edita parámetros administrativos de la boda. Rechaza con `409` si reduce `maxAccesos` por debajo de accesos activos actuales o `maxFamilias` por debajo de familias actuales. |
+| `POST /api/admin/weddings` | Crea `novios` (`nombresPareja`, `slugPlantilla`, `fechaEvento?`, `rsvpDeadline`, `maxAccesos?` default `3` rango `1..10`, `maxInvitaciones?` default `1000`, `plantillaMensaje?`, `timezone?` default `'America/Santiago'`) validado contra `DB_LIMITS` (`201`). **Hallazgo técnico:** `novios.admin_id` es `NOT NULL` en BD; cuando se invoca con `MASTER_API_KEY` (sin sesión de admin), el body debe enviar `adminId` explícito o resolver un admin dueño por defecto. |
+| `PATCH /api/admin/weddings/:noviosId` | Edita parámetros administrativos de la boda. Rechaza con `409` si reduce `maxAccesos` por debajo de accesos activos actuales o `maxInvitaciones` por debajo de familias actuales. |
 | `GET /api/admin/weddings/:noviosId/accesses` | Lista `accesos_autorizados` de la boda. |
 | `POST /api/admin/weddings/:noviosId/accesses` | Autoriza un correo Google normalizado (`BR-04` contando solo `activo = true` con `SELECT ... FOR UPDATE` sobre `novios`). `409` si alcanza `max_accesos` activos o correo repetido en la boda. |
 | `PATCH /api/admin/weddings/:noviosId/accesses/:accessId` | Activa/desactiva `{ activo: boolean }`. Si pasa a `false`, libera cupo, conserva historial de auditoría y revoca al instante las sesiones Redis del correo vía `user_sessions:<email>`. |
@@ -45,14 +45,14 @@ status: decided
 
 | Método y Ruta | Propósito y Contrato clave |
 |---|---|
-| `GET /api/weddings/:noviosId/settings` | Datos visibles de la boda para novios (`nombresPareja`, `slugPlantilla`, `fechaEvento`, `rsvpDeadline`, `timezone`, `maxFamilias`, `plantillaMensaje`, conteo actual de familias). |
-| `PATCH /api/weddings/:noviosId/message-template` | Actualiza solo `plantillaMensaje` (`<= 1000` chars). Asunto de correo fijo en v1 (`"¡Estás invitado a la boda de {nombres_pareja}!"`). Los novios nunca pueden modificar `rsvpDeadline`, `maxAccesos`, `maxFamilias` ni `slugPlantilla`. |
+| `GET /api/weddings/:noviosId/settings` | Datos visibles de la boda para novios (`nombresPareja`, `slugPlantilla`, `fechaEvento`, `rsvpDeadline`, `timezone`, `maxInvitaciones`, `plantillaMensaje`, conteo actual de familias). |
+| `PATCH /api/weddings/:noviosId/message-template` | Actualiza solo `plantillaMensaje` (`<= 1000` chars). Asunto de correo fijo en v1 (`"¡Estás invitado a la boda de {nombres_pareja}!"`). Los novios nunca pueden modificar `rsvpDeadline`, `maxAccesos`, `maxInvitaciones` ni `slugPlantilla`. |
 | `GET /api/weddings/:noviosId/families` | Lista `familias_invitadas` de la boda + estado/resumen de respuesta R.S.V.P. y **fechas de envío separadas por canal** (correo y WhatsApp). |
-| `POST /api/weddings/:noviosId/families` | Alta individual validando `DB_LIMITS` (`email` opcional/`nullable` sin `UNIQUE`; teléfono saneado flexible `8..20` chars con `+` opcional) y cupo `max_familias` (`<= 1000`) en transacción. Genera `token_enlace` (`slug <= 32` + `-` + `22` chars `crypto.randomBytes(16).toString('base64url')`, `<= 55` chars con 128 bits de entropía). |
+| `POST /api/weddings/:noviosId/families` | Alta individual validando `DB_LIMITS` (`email` opcional/`nullable` sin `UNIQUE`; teléfono saneado flexible `8..20` chars con `+` opcional) y cupo `max_invitaciones` (`<= 1000`) en transacción. Genera `token_enlace` (`slug <= 32` + `-` + `22` chars `crypto.randomBytes(16).toString('base64url')`, `<= 55` chars con 128 bits de entropía). |
 | `PATCH /api/weddings/:noviosId/families/:familiaId` | Edita familia (`WHERE id = $1 AND novios_id = $2`). Aplica `BR-05` atómicamente: si nuevos pases `< cant_asistentes`, borra `respuestas_rsvp` (cascada borra `rsvp_menus`) y retorna `rsvpInvalidated: true`. |
 | `PATCH /api/weddings/:noviosId/families/:familiaId/whatsapp-sent` | Registra o limpia la fecha de envío por WhatsApp de forma independiente a la de correo (usado en botón individual y en cola guiada Opción A `wa.me`). |
 | `DELETE /api/weddings/:noviosId/families/:familiaId` | Elimina familia (`WHERE id = $1 AND novios_id = $2`, `204`). |
-| `POST /api/weddings/:noviosId/invitations/batch` | Carga masiva atómica (`bodyLimit: 512 KiB`, array `1..1000`). Verifica `existentes + lote <= max_familias` con `FOR UPDATE` sobre `novios` (`ROLLBACK` total ante fallo). Ruta con `:noviosId` explícito para evitar mezcla entre pestañas de planners. |
+| `POST /api/weddings/:noviosId/invitations/batch` | Carga masiva atómica (`bodyLimit: 512 KiB`, array `1..1000`). Verifica `existentes + lote <= max_invitaciones` con `FOR UPDATE` sobre `novios` (`ROLLBACK` total ante fallo). Ruta con `:noviosId` explícito para evitar mezcla entre pestañas de planners. |
 | `POST /api/weddings/:noviosId/invitations/send-emails` | Rate Limit estricto en Redis. Exige `{ confirmed: true }` y acepta `familyIds?: uuid[]`. Si se omite `familyIds`, preselecciona por defecto solo familias con `email IS NOT NULL` y fecha de envío por correo vacía (evita reenvíos accidentales; `familyIds` permite seleccionar subconjunto o reenviar). Encola en BullMQ con `Idempotency-Key` en Resend, responde `202 Accepted` y actualiza la fecha de envío por correo sin tocar la de WhatsApp. |
 
 ### 1.4 Panel Novios — Dashboard Post-Envío (`/api/weddings/:noviosId/dashboard/*`)
@@ -83,7 +83,7 @@ status: decided
   - `401`: credenciales ausentes, sesión expirada/revocada o Google ID Token inválido.
   - `403`: correo fuera de lista blanca / `activo = false`, fallo de aislamiento `novios_id` (`BR-06`), fallo CSRF o plazo vencido `rsvp_deadline` (`BR-03`).
   - `404`: `token_enlace`, `novios_id` o `familia_id` inexistente.
-  - `409`: `BR-04` (`max_accesos`), `max_familias` alcanzado o correo duplicado en `accesos_autorizados`.
+  - `409`: `BR-04` (`max_accesos`), `max_invitaciones` alcanzado o correo duplicado en `accesos_autorizados`.
   - `413`: `bodyLimit` excedido.
   - `422`: `BR-01` (exceso de pases o cantidad de menús distinta a `cant_asistentes`).
   - `429`: Rate Limit excedido en Redis.

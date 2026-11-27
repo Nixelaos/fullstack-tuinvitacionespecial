@@ -53,7 +53,7 @@ export const novios = pgTable(
     fechaEvento: timestamp('fecha_evento', { withTimezone: true }),
     rsvpDeadline: timestamp('rsvp_deadline', { withTimezone: true }).notNull(),
     maxAccesos: smallint('max_accesos').notNull().default(3),
-    maxFamilias: smallint('max_familias').notNull().default(1000), //cantidad máxima de invitados
+    maxInvitaciones: smallint('max_invitaciones').notNull().default(1000), //cantidad máxima de invitados
     plantillaMensaje: varchar('plantilla_mensaje', { length: 1000 }),
     timezone: varchar('timezone', { length: 64 }).notNull().default('America/Santiago'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -61,7 +61,7 @@ export const novios = pgTable(
   (table) => [
     index('idx_novios_admin_id').on(table.adminId),
     check('chk_novios_max_accesos', sql`${table.maxAccesos} >= 1 AND ${table.maxAccesos} <= 10`),
-    check('chk_novios_max_familias', sql`${table.maxFamilias} >= 1 AND ${table.maxFamilias} <= 1000`),
+    check('chk_novios_max_invitaciones', sql`${table.maxInvitaciones} >= 1 AND ${table.maxInvitaciones} <= 1000`),
   ]
 );
 

@@ -77,8 +77,8 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
   1. **Acotar longitudes de texto y rangos numéricos en `schema.ts`, migración Drizzle (`0001_slim_doorman.sql`), `MD-PostgreeSQL.sql`, `DB_LIMITS` (`src/schemas/common.ts`) y `RSVP_FIELD_LIMITS` (`frontend-tuinvitacionespecial/`):**
      - Eliminar todas las columnas `TEXT` e `INTEGER` sin cota, reemplazándolas por `VARCHAR(N)` y `SMALLINT` con restricciones `CHECK` explícitas (`max_accesos` `1..10`, `num_adultos` `1..20`, `num_ninos` `0..15`, `num_adultos + num_ninos <= 30`, `cant_asistentes` `0..30`, `alergias` `300`, `cancion_favorita` `120`, `mensaje_novios` `500`, `mensaje_personalizado` `300`, `plantilla_mensaje` `1000`, correos `160`, nombres `80`/`100`, `slug_plantilla` `50`, `token_enlace` `80`, `telefono` `20`).
      - Añadir restricción SQL de consistencia `chk_respuestas_asistencia_consistente` en `respuestas_rsvp` (`asistencia_confirmada = false` requiere `cant_asistentes = 0`; `true` requiere `>= 1`).
-  2. **Tope de 1.000 familias invitadas por boda (`novios.max_familias`):**
-     - Añadir columna `max_familias` (`SMALLINT DEFAULT 1000 NOT NULL`, `CHECK (1..1000)`) en `novios`.
+  2. **Tope de 1.000 familias invitadas por boda (`novios.max_invitaciones`):**
+     - Añadir columna `max_invitaciones` (`SMALLINT DEFAULT 1000 NOT NULL`, `CHECK (1..1000)`) en `novios`.
      - En la importación masiva `.xlsx`/`.csv` (`panel-pre-envio-y-distribucion.md`), si el archivo supera `1.000` filas de datos (1.001 o más) o excede el cupo disponible restante hasta `1.000`, el cliente muestra un aviso claro indicando que solo se importarán los primeros `1.000` registros (o los restantes disponibles) y recorta el excedente antes de previsualizar/confirmar; el servidor valida además este tope dentro de la transacción.
 - **Alternativas descartadas:** Mantener `TEXT` e `INTEGER` abiertos confiando solo en validación en memoria o `maxLength` del navegador (descartada por riesgo de DoS y falta de integridad en base de datos).
 
@@ -88,7 +88,7 @@ Registro append-only de decisiones arquitectónicas, de alcance y de gobernanza 
 
 - **Contexto:** Tras completar la sincronización del harness `rsc` (`4.1.8`) y unificar las recomendaciones de seguridad, contratos HTTP y reglas de negocio pendientes entre sesiones, el usuario aprobó la ratificación formal de la constitución y el cierre completo de las preguntas abiertas en las 4 sub-specs ASDD.
 - **Decisión:**
-  1. **Ratificación `v1.0.0` (`constitution.md` + `REVIEW.md`):** Se retira `status: draft`, se fija `version: v1.0.0` y se refuerza el Principio 18 y Blocker #4 con `bodyLimit` de Fastify (`64 KiB` global / `512 KiB` batch), respeto estricto de `DB_LIMITS` / `max_familias <= 1000` y neutralización de Formula Injection (`=`, `+`, `-`, `@`) en exportaciones tabulares.
+  1. **Ratificación `v1.0.0` (`constitution.md` + `REVIEW.md`):** Se retira `status: draft`, se fija `version: v1.0.0` y se refuerza el Principio 18 y Blocker #4 con `bodyLimit` de Fastify (`64 KiB` global / `512 KiB` batch), respeto estricto de `DB_LIMITS` / `max_invitaciones <= 1000` y neutralización de Formula Injection (`=`, `+`, `-`, `@`) en exportaciones tabulares.
   2. **Contratos HTTP decididos (`notas-api-y-seguridad.md`):** Se cierra el Punto 1 con catálogo oficial bajo `/api/auth/*`, `/api/admin/*`, `/api/weddings/:noviosId/*`, `/api/weddings/:noviosId/dashboard/*` y `/api/public/invitations/:token`, índice inverso Redis `user_sessions:<email>` para revocación instantánea, sobre de error uniforme y ruta batch con scope `:noviosId`.
   3. **Cierre de `clarify` en las 4 specs:**
      - `auth-rbac-y-cuentas`: SuperAdmin por API/scripts en v1; `max_accesos` con valor inicial `3` (rango `1..10`) contando solo accesos `activo = true` y sin pérdida de historial compartido al desactivar un acceso; TTL fijo de 7 días en Redis.

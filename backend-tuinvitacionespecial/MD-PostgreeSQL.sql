@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS "novios" (
 	"rsvp_deadline" TIMESTAMPTZ NOT NULL,
 	"max_accesos" SMALLINT NOT NULL DEFAULT 3,
 	-- [NUEVO] Tope de registros de familias invitadas por boda
-	"max_familias" SMALLINT NOT NULL DEFAULT 1000,
+	"max_invitaciones" SMALLINT NOT NULL DEFAULT 1000,
 	-- [NUEVO] Plantilla compartida en la nube para WhatsApp granular y Email masivo
 	"plantilla_mensaje" VARCHAR(1000) NULL,
 	"timezone" VARCHAR(64) NOT NULL DEFAULT 'America/Santiago',
 	"created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
 	PRIMARY KEY("id"),
 	CONSTRAINT "chk_novios_max_accesos" CHECK ("max_accesos" >= 1 AND "max_accesos" <= 10),
-	CONSTRAINT "chk_novios_max_familias" CHECK ("max_familias" >= 1 AND "max_familias" <= 1000)
+	CONSTRAINT "chk_novios_max_invitaciones" CHECK ("max_invitaciones" >= 1 AND "max_invitaciones" <= 1000)
 );
 
 CREATE TABLE IF NOT EXISTS "accesos_autorizados" (
