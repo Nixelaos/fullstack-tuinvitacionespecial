@@ -18,6 +18,7 @@ Plataforma fullstack para crear y vender invitaciones de boda digitales interact
 
 ## 4. Límites y prohibiciones
 - Si solo hago una pregunta o pido análisis, **no modifiques ni crees archivos**.
+- Evidencia real: lee los archivos afectados antes de editar o explicar su comportamiento; nunca inventes rutas, símbolos ni resultados de tests.
 - Ramas: trabaja en la rama actual si está abierta; si el flujo usa ramas/PR o CI, pregunta antes de cada cambio (actual, nueva rama o `.worktrees/<rama>`); nunca ramifiques solo.
 - Nunca instales dependencias externas ni modifiques `.env`, configuraciones o migraciones SQL sin aprobación previa.
 - Para cambios grandes o de arquitectura, presenta primero un plan breve y espera confirmación.

@@ -2,14 +2,6 @@
 
 Mapa de documentación viva del proyecto bajo `02-DOCS/wiki/`.
 
-## Harness (`02-DOCS/wiki/harness/`)
-
-| Documento | Ruta |
-|---|---|
-| Perfil de usuario | [user-profile.md](./harness/user-profile.md) |
-| Plan de instalación | [installation-plan.md](./harness/installation-plan.md) |
-| Decisiones del harness | [decisions.md](./harness/decisions.md) |
-
 ## ASDD (`02-DOCS/wiki/sdd/`)
 
 | Documento | Rol | Ruta |
